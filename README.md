@@ -54,7 +54,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 This project is licensed under the terms specified in the LICENSE file.
-
-## Railway Auto-Deploy Test
-**Test timestamp:** 2025-01-21 15:30 UTC  
-**Status:** Testing Railway connection to HBMP-AgentBot repository
