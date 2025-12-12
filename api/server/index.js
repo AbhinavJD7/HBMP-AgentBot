@@ -144,9 +144,50 @@ const startServer = async () => {
 
   app.use('/api/tags', routes.tags);
   app.use('/api/mcp', routes.mcp);
+  app.use('/api/dashboards', routes.dashboards);
+
+  // Serve dashboard static files - MUST be before the catch-all route
+  // This handles all static files (HTML, PNG, JSON, etc.) in dashboard exports
+  const dashboardsPath = path.join(__dirname, '../dashboards/exports');
+  
+  // Use explicit route handler to ensure files are served correctly
+  app.use('/dashboards/exports', (req, res, next) => {
+    const filePath = path.join(dashboardsPath, req.path);
+    
+    // Check if file exists synchronously (for performance in this case)
+    if (!fs.existsSync(filePath)) {
+      logger.debug(`[Dashboard] File not found: ${filePath}, falling through`);
+      return next(); // File doesn't exist, fall through to catch-all
+    }
+    
+    // Set appropriate content type
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    } else if (filePath.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    } else if (filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', filePath.endsWith('.png') ? 'image/png' : 'image/jpeg');
+    }
+    
+    // Disable caching for HTML files in development
+    if (process.env.NODE_ENV !== 'production' || filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    
+    // Serve the file
+    res.sendFile(filePath, (sendErr) => {
+      if (sendErr) {
+        logger.error(`[Dashboard] Error serving file: ${filePath}`, sendErr);
+        next(sendErr);
+      }
+    });
+  });
 
   app.use(ErrorController);
 
+  // Catch-all route for React Router - must be last
   app.use((req, res) => {
     res.set({
       'Cache-Control': process.env.INDEX_CACHE_CONTROL || 'no-cache, no-store, must-revalidate',

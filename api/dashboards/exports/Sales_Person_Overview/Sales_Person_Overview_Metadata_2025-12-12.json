@@ -1,0 +1,134 @@
+{
+  "dashboard": {
+    "name": "Sales Person Overview",
+    "type": "sales_person",
+    "description": "Sales Person Overview Dashboard showing sales timeline and performance metrics",
+    "exportDate": "2025-12-12T07:56:28.120Z"
+  },
+  "filters": {
+    "selectedYear": "2017-18",
+    "selectedQuarter": "Q1"
+  },
+  "data": {
+    "summary": {},
+    "dataPoints": 0,
+    "lastUpdated": "2025-12-12T07:56:28.122Z"
+  },
+  "visualization": {
+    "chartTypes": [
+      "Bar Chart (Sales Timeline)"
+    ],
+    "metrics": [
+      "Sales",
+      "SalesLY",
+      "Target",
+      "Gross Profit"
+    ],
+    "dimensions": []
+  },
+  "context": {
+    "selectedYear": "2017-18",
+    "selectedQuarter": "Q1",
+    "comparisonMode": null,
+    "otherFilters": {}
+  },
+  "rawData": {
+    "chartData": [
+      {
+        "period": "2018 01",
+        "currentYTD": 45949305.727206975,
+        "priorYTD": 33961320.80863693
+      },
+      {
+        "period": "2017 04",
+        "currentYTD": 44736959.02856428,
+        "priorYTD": 28946995.062293738
+      },
+      {
+        "period": "2017 03",
+        "currentYTD": 41671129.92566031,
+        "priorYTD": 24293753.089751378
+      },
+      {
+        "period": "2017 02",
+        "currentYTD": 49926245.54005384,
+        "priorYTD": 34967371.43877554
+      },
+      {
+        "period": "2017 01",
+        "currentYTD": 42460948.526838094,
+        "priorYTD": 27605942.57094916
+      },
+      {
+        "period": "2016 04",
+        "currentYTD": 42925187.90112262,
+        "priorYTD": 32888810.927612342
+      }
+    ],
+    "tableData": [
+      {
+        "name": "Shiv",
+        "sales": 97.9,
+        "salesLY": 127.4,
+        "target": 117,
+        "grossProfit": 46.8
+      },
+      {
+        "name": "Aditya",
+        "sales": 104.5,
+        "salesLY": 127.4,
+        "target": 120.9,
+        "grossProfit": 48.36
+      },
+      {
+        "name": "Vikas",
+        "sales": 105.6,
+        "salesLY": 128.8,
+        "target": 122.2,
+        "grossProfit": 48.88
+      },
+      {
+        "name": "Govind",
+        "sales": 26.4,
+        "salesLY": 127.4,
+        "target": 117,
+        "grossProfit": 46.8
+      },
+      {
+        "name": "Chetan",
+        "sales": 100.1,
+        "salesLY": 15.4,
+        "target": 117,
+        "grossProfit": 46.8
+      },
+      {
+        "name": "Sachin",
+        "sales": 102.3,
+        "salesLY": 119,
+        "target": 115.7,
+        "grossProfit": 46.28
+      },
+      {
+        "name": "Kishor",
+        "sales": 108.9,
+        "salesLY": 36.4,
+        "target": 124.8,
+        "grossProfit": 49.92
+      },
+      {
+        "name": "Sanket",
+        "sales": 93.5,
+        "salesLY": 127.4,
+        "target": 114.4,
+        "grossProfit": 45.76
+      },
+      {
+        "name": "Akhilesh",
+        "sales": 94.6,
+        "salesLY": 123.2,
+        "target": 113.1,
+        "grossProfit": 45.24
+      }
+    ]
+  }
+}

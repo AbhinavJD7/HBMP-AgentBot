@@ -6,6 +6,7 @@ import MarkdownLite from '~/components/Chat/Messages/Content/MarkdownLite';
 import { useProgress, useLocalize } from '~/hooks';
 import { AttachmentGroup } from './Attachment';
 import Stdout from './Stdout';
+import Chart, { type ChartData } from './Chart';
 import { cn } from '~/utils';
 import store from '~/store';
 
@@ -69,6 +70,48 @@ export default function ExecuteCode({
   const prevShowCodeRef = useRef<boolean>(showCode);
   const { lang, code } = useParseArgs(args) ?? ({} as ParsedArgs);
   const progress = useProgress(initialProgress);
+
+  // Detect chart data in output
+  const chartData = useMemo<ChartData | null>(() => {
+    if (!output) {
+      return null;
+    }
+
+    // Try to detect Plotly JSON format in code blocks
+    const plotlyMatch = output.match(/```(?:json|plotly)?\s*(\{[\s\S]*?"type"\s*:\s*"plotly"[\s\S]*?\})\s*```/);
+    if (plotlyMatch) {
+      try {
+        const parsed = JSON.parse(plotlyMatch[1]);
+        return { type: 'plotly', ...parsed };
+      } catch {
+        // Continue to other detection methods
+      }
+    }
+
+    // Try to detect Chart.js format
+    const chartjsMatch = output.match(/```(?:json|chartjs)?\s*(\{[\s\S]*?"type"\s*:\s*"chartjs"[\s\S]*?\})\s*```/);
+    if (chartjsMatch) {
+      try {
+        const parsed = JSON.parse(chartjsMatch[1]);
+        return { type: 'chartjs', ...parsed };
+      } catch {
+        // Continue to other detection methods
+      }
+    }
+
+    // Try to detect inline JSON chart data
+    const jsonMatch = output.match(/\{[\s\S]*?"type"\s*:\s*"(?:plotly|chartjs)"[\s\S]*?\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return parsed as ChartData;
+      } catch {
+        // Not valid JSON
+      }
+    }
+
+    return null;
+  }, [output]);
 
   useEffect(() => {
     if (output !== outputRef.current) {
@@ -212,9 +255,13 @@ export default function ExecuteCode({
                 boxShadow: showCode ? '0 -1px 0 rgba(0,0,0,0.05)' : 'none',
               }}
             >
-              <div className="prose flex flex-col-reverse">
-                <Stdout output={output} />
-              </div>
+              {chartData ? (
+                <Chart chartData={chartData} />
+              ) : (
+                <div className="prose flex flex-col-reverse">
+                  <Stdout output={output} />
+                </div>
+              )}
             </div>
           )}
         </div>

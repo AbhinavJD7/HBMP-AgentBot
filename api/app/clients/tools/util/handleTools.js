@@ -35,6 +35,9 @@ const {
   createYouTubeTools,
   TavilySearchResults,
   createOpenAIImageTools,
+  GeminiImageGen,
+  VeoVideoGen,
+  ExplainDashboard,
 } = require('../');
 const { primeFiles: primeCodeFiles } = require('~/server/services/Files/Code/process');
 const { createFileSearchTool, primeFiles: primeSearchFiles } = require('./fileSearch');
@@ -179,6 +182,9 @@ const loadTools = async ({
     'azure-ai-search': StructuredACS,
     traversaal_search: TraversaalSearch,
     tavily_search_results_json: TavilySearchResults,
+    'gemini-image-gen': GeminiImageGen,
+    'veo-video-gen': VeoVideoGen,
+    'explain_dashboard': ExplainDashboard,
   };
 
   const customConstructors = {
@@ -186,6 +192,9 @@ const loadTools = async ({
       const authFields = getAuthFields('youtube');
       const authValues = await loadAuthValues({ userId: user, authFields });
       return createYouTubeTools(authValues);
+    },
+    'explain_dashboard': async (_toolContextMap) => {
+      return new ExplainDashboard({ userId: user });
     },
     image_gen_oai: async (toolContextMap) => {
       const authFields = getAuthFields('image_gen_oai');
@@ -240,6 +249,8 @@ const loadTools = async ({
     flux: imageGenOptions,
     dalle: imageGenOptions,
     'stable-diffusion': imageGenOptions,
+    'gemini-image-gen': imageGenOptions,
+    'veo-video-gen': imageGenOptions,
   };
 
   /** @type {Record<string, string>} */

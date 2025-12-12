@@ -85,8 +85,9 @@ export const useEndpoints = ({
       const iconKey = getIconKey({ endpoint: ep, endpointsConfig, endpointType });
       const Icon = icons[iconKey];
       const endpointIconURL = getEndpointField(endpointsConfig, ep, 'iconURL');
+      // Always show agents endpoint even if no agents exist (so users can create their first agent)
       const hasModels =
-        (ep === EModelEndpoint.agents && (agents?.length ?? 0) > 0) ||
+        (ep === EModelEndpoint.agents) ||
         (ep === EModelEndpoint.assistants && assistants?.length > 0) ||
         (ep !== EModelEndpoint.assistants &&
           ep !== EModelEndpoint.agents &&

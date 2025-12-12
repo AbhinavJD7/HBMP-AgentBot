@@ -1,0 +1,98 @@
+{
+  "id": "sales_overview_v1",
+  "name": "Sales Overview – YTD vs Target",
+  "category": "Sales",
+  "audience": "Sales Manager (Mid Level)",
+  "description": "Gives a monthly view of sales vs last year and vs target, along with gross profit percentage over time.",
+  "files": {
+    "html": "Sales_Overview_Dashboard_2025-12-11.html",
+    "json": "Sales_Overview_Metadata_2025-12-11.json",
+    "image": "Sales_Overview_Dashboard_2025-12-11.png"
+  },
+  "timeRange": "2015–2017 (selectable by year and comparison mode)",
+  "tabs": [
+    "2015",
+    "2016",
+    "2017",
+    "Vs Prior",
+    "Vs Target"
+  ],
+  "kpis": [
+    {
+      "id": "sales",
+      "label": "Sales",
+      "description": "Total sales amount for the selected period."
+    },
+    {
+      "id": "lySales",
+      "label": "Last Year Sales",
+      "description": "Sales for the same period in the previous year."
+    },
+    {
+      "id": "grossProfitPercent",
+      "label": "Gross Profit %",
+      "description": "Gross profit as a percentage of sales."
+    }
+  ],
+  "visuals": [
+    {
+      "id": "gross_profit_ytd",
+      "type": "area",
+      "title": "Gross Profit YTD vs Prior/Target",
+      "description": "Area chart showing gross profit year-to-date compared with prior year and target."
+    },
+    {
+      "id": "sales_ytd",
+      "type": "area",
+      "title": "Sales YTD vs Prior/Target",
+      "description": "Area chart of cumulative sales compared with prior year and target."
+    },
+    {
+      "id": "cost_ytd",
+      "type": "area",
+      "title": "Cost YTD vs Prior/Target",
+      "description": "Area chart showing cumulative cost vs prior and target."
+    },
+    {
+      "id": "quantity_ytd",
+      "type": "area",
+      "title": "Quantity YTD vs Prior/Target",
+      "description": "Area chart for quantity sold vs prior/target."
+    },
+    {
+      "id": "sales_overview_main",
+      "type": "combo",
+      "title": "Sales Overview",
+      "description": "Main chart combining monthly sales, last year sales (bars) and gross profit percent (line) over time."
+    }
+  ],
+  "filters": [
+    {
+      "id": "year",
+      "label": "Year",
+      "type": "single-select",
+      "options": [
+        "2015",
+        "2016",
+        "2017"
+      ]
+    },
+    {
+      "id": "comparisonMode",
+      "label": "Comparison",
+      "type": "single-select",
+      "options": [
+        "Vs Prior",
+        "Vs Target"
+      ]
+    }
+  ],
+  "tags": [
+    "sales",
+    "overview",
+    "ytd",
+    "target",
+    "gross profit",
+    "management dashboard"
+  ]
+}

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLocalize } from '~/hooks';
 import { Tools } from 'librechat-data-provider';
 import { UIResourceRenderer } from '@mcp-ui/client';
 import UIResourceCarousel from './UIResourceCarousel';
+import DashboardExplanation, { type DashboardExplanationData } from './Parts/DashboardExplanation';
 import type { TAttachment, UIResource } from 'librechat-data-provider';
 
 function OptimizedCodeBlock({ text, maxHeight = 320 }: { text: string; maxHeight?: number }) {
@@ -38,6 +39,50 @@ export default function ToolCallInfo({
   attachments?: TAttachment[];
 }) {
   const localize = useLocalize();
+  
+  // Check if output contains dashboard explanation
+  const dashboardExplanation = useMemo<DashboardExplanationData | null>(() => {
+    if (!output) {
+      return null;
+    }
+    try {
+      // Try parsing as JSON
+      const parsed = JSON.parse(output);
+      if (parsed && parsed.type === 'dashboard_explanation') {
+        return parsed as DashboardExplanationData;
+      }
+      // Also check if it's nested in a result object
+      if (parsed && typeof parsed === 'object' && 'result' in parsed) {
+        const result = parsed.result;
+        if (result && typeof result === 'string') {
+          try {
+            const nestedParsed = JSON.parse(result);
+            if (nestedParsed && nestedParsed.type === 'dashboard_explanation') {
+              return nestedParsed as DashboardExplanationData;
+            }
+          } catch {
+            // Not nested JSON
+          }
+        }
+      }
+    } catch {
+      // Not JSON or not dashboard explanation - try to find JSON in the string
+      try {
+        // Look for JSON object in the output string
+        const jsonMatch = output.match(/\{[\s\S]*?"type"\s*:\s*"dashboard_explanation"[\s\S]*?\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed && parsed.type === 'dashboard_explanation') {
+            return parsed as DashboardExplanationData;
+          }
+        }
+      } catch {
+        // Couldn't extract JSON
+      }
+    }
+    return null;
+  }, [output]);
+
   const formatText = (text: string) => {
     try {
       return JSON.stringify(JSON.parse(text), null, 2);
@@ -77,7 +122,11 @@ export default function ToolCallInfo({
               {localize('com_ui_result')}
             </div>
             <div>
-              <OptimizedCodeBlock text={formatText(output)} maxHeight={250} />
+              {dashboardExplanation ? (
+                <DashboardExplanation data={dashboardExplanation} />
+              ) : (
+                <OptimizedCodeBlock text={formatText(output)} maxHeight={250} />
+              )}
             </div>
             {uiResources.length > 0 && (
               <div className="my-2 text-sm font-medium text-text-primary">

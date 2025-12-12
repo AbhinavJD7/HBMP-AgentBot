@@ -1,0 +1,188 @@
+{
+  "dashboard": {
+    "name": "Product ABC",
+    "type": "product_abc",
+    "description": "Product ABC Dashboard showing product performance by ABC band",
+    "exportDate": "2025-12-12T07:57:04.517Z"
+  },
+  "filters": {
+    "abcBand": "A",
+    "selectedYear": "2017-18",
+    "comparisonMode": "vs Prior"
+  },
+  "data": {
+    "summary": {},
+    "dataPoints": 0,
+    "lastUpdated": "2025-12-12T07:57:04.517Z"
+  },
+  "visualization": {
+    "chartTypes": [
+      "Area Chart (Sales YTD)",
+      "Area Chart (Gross Profit YTD)",
+      "Composed Chart (Main)"
+    ],
+    "metrics": [
+      "Sales YTD",
+      "Gross Profit YTD"
+    ],
+    "dimensions": []
+  },
+  "context": {
+    "selectedYear": "2017-18",
+    "selectedQuarter": null,
+    "comparisonMode": "vs Prior",
+    "otherFilters": {}
+  },
+  "rawData": {
+    "salesYTD": [
+      {
+        "month": "Jan",
+        "current": 47162069.42598507,
+        "priorTarget": 40976498.438482605
+      },
+      {
+        "month": "Feb",
+        "current": 48818664.446732,
+        "priorTarget": 42709017.42692401
+      },
+      {
+        "month": "Mar",
+        "current": 43499527.34496026,
+        "priorTarget": 38545294.63624385
+      },
+      {
+        "month": "Apr",
+        "current": 46159175.286472596,
+        "priorTarget": 41385560.156911924
+      },
+      {
+        "month": "May",
+        "current": 43049987.70323507,
+        "priorTarget": 37202338.94970686
+      },
+      {
+        "month": "Jun",
+        "current": 46869942.7307586,
+        "priorTarget": 40062153.13207989
+      },
+      {
+        "month": "Jul",
+        "current": 40267347.13923154,
+        "priorTarget": 36351685.09331448
+      },
+      {
+        "month": "Aug",
+        "current": 42841890.33019381,
+        "priorTarget": 39867480.83383364
+      },
+      {
+        "month": "Sep",
+        "current": 42895226.28236021,
+        "priorTarget": 35348831.03877245
+      },
+      {
+        "month": "Oct",
+        "current": 45053348.24516517,
+        "priorTarget": 38347296.60083081
+      },
+      {
+        "month": "Nov",
+        "current": 44119352.71324982,
+        "priorTarget": 39372930.08538205
+      },
+      {
+        "month": "Dec",
+        "current": 48768035.18705624,
+        "priorTarget": 40500517.70960552
+      }
+    ],
+    "grossProfitYTD": [
+      {
+        "month": "Jan",
+        "current": 23515179.09097312,
+        "priorTarget": 19243089.34144839
+      },
+      {
+        "month": "Feb",
+        "current": 21417200.390670534,
+        "priorTarget": 20511134.936875723
+      },
+      {
+        "month": "Mar",
+        "current": 23811483.48355496,
+        "priorTarget": 20665598.766955253
+      },
+      {
+        "month": "Apr",
+        "current": 24012222.077726636,
+        "priorTarget": 21442530.0278785
+      },
+      {
+        "month": "May",
+        "current": 20420758.73516661,
+        "priorTarget": 18381006.15465789
+      },
+      {
+        "month": "Jun",
+        "current": 22637631.62048627,
+        "priorTarget": 18762364.714663208
+      },
+      {
+        "month": "Jul",
+        "current": 24615337.465794448,
+        "priorTarget": 21705972.764018666
+      },
+      {
+        "month": "Aug",
+        "current": 20968963.61789647,
+        "priorTarget": 20066796.468489114
+      },
+      {
+        "month": "Sep",
+        "current": 20489349.171617992,
+        "priorTarget": 19519385.33123981
+      },
+      {
+        "month": "Oct",
+        "current": 21415017.35956534,
+        "priorTarget": 20375812.383850027
+      },
+      {
+        "month": "Nov",
+        "current": 22818239.480738766,
+        "priorTarget": 18003216.28236827
+      },
+      {
+        "month": "Dec",
+        "current": 21205199.169444665,
+        "priorTarget": 21738836.204236183
+      }
+    ],
+    "mainChart": [
+      {
+        "period": "2016.02",
+        "salesYTD": 42000000,
+        "salesPriorTarget": 5000000,
+        "grossProfit": 20000000
+      },
+      {
+        "period": "2016.03",
+        "salesYTD": 78000000,
+        "salesPriorTarget": 38000000,
+        "grossProfit": 40000000
+      },
+      {
+        "period": "2016.04",
+        "salesYTD": 60000000,
+        "salesPriorTarget": 22000000,
+        "grossProfit": 25000000
+      },
+      {
+        "period": "2017.01",
+        "salesYTD": 50000000,
+        "salesPriorTarget": 12000000,
+        "grossProfit": 15000000
+      }
+    ]
+  }
+}

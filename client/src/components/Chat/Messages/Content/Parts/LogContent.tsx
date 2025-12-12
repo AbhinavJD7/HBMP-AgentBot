@@ -5,6 +5,10 @@ import type { TFile, TAttachment, TAttachmentMetadata } from 'librechat-data-pro
 import Image from '~/components/Chat/Messages/Content/Image';
 import { useLocalize } from '~/hooks';
 import LogLink from './LogLink';
+import Chart, { type ChartData } from './Chart';
+import Video from './Video';
+
+const videoExtRegex = /\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|m4v|3gp|gif)$/i;
 
 interface LogContentProps {
   output?: string;
@@ -30,8 +34,51 @@ const LogContent: React.FC<LogContentProps> = ({ output = '', renderImages, atta
     return parts[0].trim();
   }, [output]);
 
-  const { imageAttachments, nonImageAttachments } = useMemo(() => {
+  // Detect chart data in output
+  const chartData = useMemo<ChartData | null>(() => {
+    if (!output) {
+      return null;
+    }
+
+    // Try to detect Plotly JSON format
+    const plotlyMatch = output.match(/```(?:json|plotly)?\s*(\{[\s\S]*?"type"\s*:\s*"plotly"[\s\S]*?\})\s*```/);
+    if (plotlyMatch) {
+      try {
+        const parsed = JSON.parse(plotlyMatch[1]);
+        return { type: 'plotly', ...parsed };
+      } catch {
+        // Continue to other detection methods
+      }
+    }
+
+    // Try to detect Chart.js format
+    const chartjsMatch = output.match(/```(?:json|chartjs)?\s*(\{[\s\S]*?"type"\s*:\s*"chartjs"[\s\S]*?\})\s*```/);
+    if (chartjsMatch) {
+      try {
+        const parsed = JSON.parse(chartjsMatch[1]);
+        return { type: 'chartjs', ...parsed };
+      } catch {
+        // Continue to other detection methods
+      }
+    }
+
+    // Try to detect inline JSON chart data
+    const jsonMatch = output.match(/\{[\s\S]*?"type"\s*:\s*"(?:plotly|chartjs)"[\s\S]*?\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return parsed as ChartData;
+      } catch {
+        // Not valid JSON
+      }
+    }
+
+    return null;
+  }, [output]);
+
+  const { imageAttachments, videoAttachments, nonImageAttachments } = useMemo(() => {
     const imageAtts: ImageAttachment[] = [];
+    const videoAtts: TAttachment[] = [];
     const nonImageAtts: TAttachment[] = [];
 
     attachments?.forEach((attachment) => {
@@ -41,7 +88,12 @@ const LogContent: React.FC<LogContentProps> = ({ output = '', renderImages, atta
         width != null &&
         height != null &&
         filepath != null;
-      if (isImage) {
+      const isVideo =
+        videoExtRegex.test(attachment.filename ?? '') && filepath != null;
+      
+      if (isVideo) {
+        videoAtts.push(attachment);
+      } else if (isImage) {
         imageAtts.push(attachment as ImageAttachment);
       } else {
         nonImageAtts.push(attachment);
@@ -50,6 +102,7 @@ const LogContent: React.FC<LogContentProps> = ({ output = '', renderImages, atta
 
     return {
       imageAttachments: renderImages === true ? imageAtts : null,
+      videoAttachments: videoAtts,
       nonImageAttachments: nonImageAtts,
     };
   }, [attachments, renderImages]);
@@ -81,7 +134,23 @@ const LogContent: React.FC<LogContentProps> = ({ output = '', renderImages, atta
 
   return (
     <>
+      {chartData && <Chart chartData={chartData} />}
       {processedContent && <div>{processedContent}</div>}
+      {videoAttachments.length > 0 && (
+        <div className="my-2">
+          {videoAttachments.map((attachment, index) => {
+            const { filepath } = attachment as TFile & TAttachmentMetadata;
+            return (
+              <Video
+                key={index}
+                src={filepath ?? ''}
+                title={attachment.filename || 'Video'}
+                controls={true}
+              />
+            );
+          })}
+        </div>
+      )}
       {nonImageAttachments.length > 0 && (
         <div>
           <p>{localize('com_generated_files')}</p>

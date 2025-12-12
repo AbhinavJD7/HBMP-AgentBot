@@ -179,5 +179,41 @@
         "description": "Provide your Flux API key from your user profile."
       }
     ]
+  },
+  {
+    "name": "Gemini Image Generation",
+    "pluginKey": "gemini-image-gen",
+    "description": "Generate high-quality images using Google Gemini/Imagen models. Supports multiple models: Gemini 2.5 Flash Image, Gemini 3 Pro Image, and Imagen 4.0.",
+    "icon": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
+    "isAuthRequired": "true",
+    "authConfig": [
+      {
+        "authField": "GOOGLE_KEY||GOOGLE_API_KEY",
+        "label": "Google Gemini API Key",
+        "description": "Your Google Gemini API key. Get it from <a href='https://aistudio.google.com/app/apikey' target='_blank'>Google AI Studio</a>."
+      }
+    ]
+  },
+  {
+    "name": "Veo Video Generation",
+    "pluginKey": "veo-video-gen",
+    "description": "Generate videos from text descriptions using Google Veo 3.0 models. Supports fast and standard generation modes.",
+    "icon": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
+    "isAuthRequired": "true",
+    "authConfig": [
+      {
+        "authField": "GOOGLE_KEY||GOOGLE_API_KEY",
+        "label": "Google Gemini API Key",
+        "description": "Your Google Gemini API key. Get it from <a href='https://aistudio.google.com/app/apikey' target='_blank'>Google AI Studio</a>."
+      }
+    ]
+  },
+  {
+    "name": "Dashboard Explanation",
+    "pluginKey": "explain_dashboard",
+    "description": "Explain dashboards to users. Use this to understand what dashboards are available, what they show, and how to use them.",
+    "icon": "assets/dashboard-icon.svg",
+    "isAuthRequired": "false",
+    "authConfig": []
   }
 ]
