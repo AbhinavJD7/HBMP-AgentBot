@@ -112,7 +112,7 @@ export default function Attachment({ attachment }: { attachment?: TAttachment })
   const isImage = attachment.filename
     ? imageExtRegex.test(attachment.filename) && width != null && height != null && filepath != null
     : false;
-  
+
   const isVideo = attachment.filename
     ? videoExtRegex.test(attachment.filename) && filepath != null
     : false;
@@ -144,7 +144,7 @@ export function AttachmentGroup({ attachments }: { attachments?: TAttachment[] }
         height != null &&
         filepath != null
       : false;
-    
+
     const isVideo = attachment.filename
       ? videoExtRegex.test(attachment.filename) && filepath != null
       : false;

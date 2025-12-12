@@ -258,9 +258,9 @@ export default function ExecuteCode({
               {chartData ? (
                 <Chart chartData={chartData} />
               ) : (
-                <div className="prose flex flex-col-reverse">
-                  <Stdout output={output} />
-                </div>
+              <div className="prose flex flex-col-reverse">
+                <Stdout output={output} />
+              </div>
               )}
             </div>
           )}

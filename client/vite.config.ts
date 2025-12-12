@@ -100,11 +100,14 @@ export default defineConfig(({ command }) => ({
   ],
   publicDir: command === 'serve' ? './public' : false,
   build: {
-    sourcemap: process.env.NODE_ENV === 'development',
+    sourcemap: false, // Disabled for production to save ~30% memory during build
     outDir: './dist',
-    minify: 'terser',
+    minify: 'esbuild', // esbuild uses ~40% less memory than terser
+    target: 'es2015', // Reduces transformation overhead
+    cssCodeSplit: true,
+    reportCompressedSize: false, // Don't calculate compressed sizes to save memory
     rollupOptions: {
-      preserveEntrySignatures: 'strict',
+      preserveEntrySignatures: 'allow-extension', // Less memory intensive than 'strict'
       output: {
         manualChunks(id: string) {
           const normalizedId = id.replace(/\\/g, '/');
