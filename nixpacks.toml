@@ -1,13 +1,19 @@
 [phases.setup]
 nixPkgs = ["nodejs", "npm"]
 
+# Set NODE_OPTIONS globally for all phases
 [phases.install]
+env = { NODE_OPTIONS = "--max-old-space-size=6144" }
 cmds = ["npm ci"]
 
 [phases.build]
+env = { NODE_OPTIONS = "--max-old-space-size=6144" }
 cmds = [
+  "echo '=== Build Memory Configuration ==='",
+  "echo 'NODE_OPTIONS:' $NODE_OPTIONS",
+  "node --max-old-space-size=6144 -e 'console.log(\"Memory limit verified:\", process.env.NODE_OPTIONS)'",
   "npm run build:packages",
-  "NODE_OPTIONS=\"--max-old-space-size=6144\" npm run build:client"
+  "npm run build:client"
 ]
 
 [start]
