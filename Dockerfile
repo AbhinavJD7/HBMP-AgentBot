@@ -38,11 +38,6 @@ RUN \
 
 COPY --chown=node:node . .
 
-# Cache-busting to ensure fresh build with new memory settings
-ARG BUILD_DATE=unknown
-RUN echo "Build date: ${BUILD_DATE}" > /tmp/build.info && \
-    echo "Memory limit: 6144MB" >> /tmp/build.info
-
 RUN \
     # Build packages first
     npm run build:packages; \

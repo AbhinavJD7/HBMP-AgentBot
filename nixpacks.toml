@@ -9,9 +9,6 @@ cmds = ["npm ci"]
 [phases.build]
 env = { NODE_OPTIONS = "--max-old-space-size=6144" }
 cmds = [
-  "echo '=== Build Memory Configuration ==='",
-  "echo 'NODE_OPTIONS:' $NODE_OPTIONS",
-  "node --max-old-space-size=6144 -e 'console.log(\"Memory limit verified:\", process.env.NODE_OPTIONS)'",
   "npm run build:packages",
   "npm run build:client"
 ]
