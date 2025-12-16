@@ -16,7 +16,6 @@ interface BadgeRowContextType {
   conversationId?: string | null;
   agentsConfig?: TAgentsEndpoint | null;
   webSearch: ReturnType<typeof useToolToggle>;
-  artifacts: ReturnType<typeof useToolToggle>;
   fileSearch: ReturnType<typeof useToolToggle>;
   codeInterpreter: ReturnType<typeof useToolToggle>;
   codeApiKeyForm: ReturnType<typeof useCodeApiKeyForm>;
@@ -178,19 +177,10 @@ export default function BadgeRowProvider({
     isAuthenticated: true,
   });
 
-  /** Artifacts hook - using a custom key since it's not a Tool but a capability */
-  const artifacts = useToolToggle({
-    conversationId,
-    toolKey: AgentCapabilities.artifacts,
-    localStorageKey: LocalStorageKeys.LAST_ARTIFACTS_TOGGLE_,
-    isAuthenticated: true,
-  });
-
   const mcpServerManager = useMCPServerManager({ conversationId });
 
   const value: BadgeRowContextType = {
     webSearch,
-    artifacts,
     fileSearch,
     agentsConfig,
     conversationId,

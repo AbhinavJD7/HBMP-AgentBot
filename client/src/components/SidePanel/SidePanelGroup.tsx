@@ -5,7 +5,7 @@ import { getConfigDefaults } from 'librechat-data-provider';
 import { ResizablePanel, ResizablePanelGroup, useMediaQuery } from '@librechat/client';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useGetStartupConfig } from '~/data-provider';
-import ArtifactsPanel from './ArtifactsPanel';
+// import ArtifactsPanel from './ArtifactsPanel'; // Removed - artifacts feature disabled
 import { normalizeLayout } from '~/utils';
 import SidePanel from './SidePanel';
 import store from '~/store';

@@ -39,11 +39,11 @@ RUN \
 COPY --chown=node:node . .
 
 RUN \
-    # Build packages first
-    npm run build:packages; \
-    # React client build - increased memory limit to 6144MB (6GB) to prevent OOM errors
+    # Build packages first - set memory limit to prevent OOM errors
+    NODE_OPTIONS="--max-old-space-size=8192" npm run build:packages; \
+    # React client build - increased memory limit to 8192MB (8GB) to prevent OOM errors
     # Using higher limit due to large codebase and dependencies
-    NODE_OPTIONS="--max-old-space-size=6144" npm run build:client; \
+    NODE_OPTIONS="--max-old-space-size=8192" npm run build:client; \
     npm prune --production; \
     npm cache clean --force
 

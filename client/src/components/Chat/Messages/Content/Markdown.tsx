@@ -9,8 +9,9 @@ import rehypeHighlight from 'rehype-highlight';
 import remarkDirective from 'remark-directive';
 import type { Pluggable } from 'unified';
 import { Citation, CompositeCitation, HighlightedText } from '~/components/Web/Citation';
-import { Artifact, artifactPlugin } from '~/components/Artifacts/Artifact';
-import { ArtifactProvider, CodeBlockProvider } from '~/Providers';
+// import { Artifact, artifactPlugin } from '~/components/Artifacts/Artifact'; // Removed - artifacts feature disabled
+import { CodeBlockProvider } from '~/Providers';
+// import { ArtifactProvider } from '~/Providers'; // Removed - artifacts feature disabled
 import MarkdownErrorBoundary from './MarkdownErrorBoundary';
 import { langSubset, preprocessLaTeX } from '~/utils';
 import { unicodeCitation } from '~/components/Web';
@@ -52,7 +53,7 @@ const Markdown = memo(({ content = '', isLatestMessage }: TContentProps) => {
     supersub,
     remarkGfm,
     remarkDirective,
-    artifactPlugin,
+    // artifactPlugin, // Removed - artifacts feature disabled
     [remarkMath, { singleDollarTextMath: false }],
     unicodeCitation,
   ];
@@ -69,31 +70,29 @@ const Markdown = memo(({ content = '', isLatestMessage }: TContentProps) => {
 
   return (
     <MarkdownErrorBoundary content={content} codeExecution={true}>
-      <ArtifactProvider>
-        <CodeBlockProvider>
-          <ReactMarkdown
-            /** @ts-ignore */
-            remarkPlugins={remarkPlugins}
-            /* @ts-ignore */
-            rehypePlugins={rehypePlugins}
-            components={
-              {
-                code,
-                a,
-                p,
-                artifact: Artifact,
-                citation: Citation,
-                'highlighted-text': HighlightedText,
-                'composite-citation': CompositeCitation,
-              } as {
-                [nodeType: string]: React.ElementType;
-              }
+      <CodeBlockProvider>
+        <ReactMarkdown
+          /** @ts-ignore */
+          remarkPlugins={remarkPlugins}
+          /* @ts-ignore */
+          rehypePlugins={rehypePlugins}
+          components={
+            {
+              code,
+              a,
+              p,
+              // artifact: Artifact, // Removed - artifacts feature disabled
+              citation: Citation,
+              'highlighted-text': HighlightedText,
+              'composite-citation': CompositeCitation,
+            } as {
+              [nodeType: string]: React.ElementType;
             }
-          >
-            {currentContent}
-          </ReactMarkdown>
-        </CodeBlockProvider>
-      </ArtifactProvider>
+          }
+        >
+          {currentContent}
+        </ReactMarkdown>
+      </CodeBlockProvider>
     </MarkdownErrorBoundary>
   );
 });

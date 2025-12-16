@@ -53,7 +53,7 @@ export default defineConfig(({ command }) => ({
           'manifest.webmanifest',
         ],
         globIgnores: ['images/**/*', '**/*.map', 'index.html'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Increased to 10MB to accommodate large vendor chunks
         navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
       },
       includeAssets: [],
@@ -113,9 +113,6 @@ export default defineConfig(({ command }) => ({
           const normalizedId = id.replace(/\\/g, '/');
           if (normalizedId.includes('node_modules')) {
             // High-impact chunking for large libraries
-            if (normalizedId.includes('@codesandbox/sandpack')) {
-              return 'sandpack';
-            }
             if (normalizedId.includes('react-virtualized')) {
               return 'virtualization';
             }

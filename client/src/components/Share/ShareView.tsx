@@ -17,7 +17,7 @@ import {
   OGDialogTrigger,
 } from '@librechat/client';
 import { ThemeSelector, LangSelector } from '~/components/Nav/SettingsTabs/General/General';
-import { ShareArtifactsContainer } from './ShareArtifacts';
+// import { ShareArtifactsContainer } from './ShareArtifacts'; // Removed - artifacts feature disabled
 import { useLocalize, useDocumentTitle } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 import { ShareContext } from '~/Providers';
@@ -134,22 +134,23 @@ function SharedView() {
     </div>
   );
 
-  const artifactsContainer =
-    data && data.messages ? (
-      <ShareArtifactsContainer
-        messages={data.messages}
-        conversationId={data.conversationId}
-        mainContent={mainContent}
-      />
-    ) : (
-      mainContent
-    );
+  // Artifacts feature disabled - using mainContent directly
+  // const artifactsContainer =
+  //   data && data.messages ? (
+  //     <ShareArtifactsContainer
+  //       messages={data.messages}
+  //       conversationId={data.conversationId}
+  //       mainContent={mainContent}
+  //     />
+  //   ) : (
+  //     mainContent
+  //   );
 
   return (
     <ShareContext.Provider value={{ isSharedConvo: true }}>
       <div className="relative flex min-h-screen w-full dark:bg-surface-secondary">
         <main className="relative flex w-full grow overflow-hidden dark:bg-surface-secondary">
-          {artifactsContainer}
+          {mainContent}
         </main>
       </div>
     </ShareContext.Provider>

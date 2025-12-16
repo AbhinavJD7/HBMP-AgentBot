@@ -22,8 +22,8 @@ fi
 echo -e "${GREEN}✅ Node.js version: $(node -v)${NC}"
 
 # Set memory limit for build
-export NODE_OPTIONS="--max-old-space-size=6144"
-echo -e "${GREEN}✅ Memory limit set to 6144MB${NC}"
+export NODE_OPTIONS="--max-old-space-size=8192"
+echo -e "${GREEN}✅ Memory limit set to 8192MB${NC}"
 
 # Check if .env exists
 if [ ! -f .env ]; then
@@ -90,4 +90,5 @@ echo "  1. Test locally: npm run backend"
 echo "  2. Deploy to Zeabur/Railway/etc."
 echo "  3. Set environment variables in deployment platform"
 echo ""
+
 

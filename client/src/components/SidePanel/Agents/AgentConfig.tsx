@@ -25,7 +25,7 @@ import AgentAvatar from './AgentAvatar';
 import FileContext from './FileContext';
 import SearchForm from './Search/Form';
 import FileSearch from './FileSearch';
-import Artifacts from './Artifacts';
+// import Artifacts from './Artifacts'; // Removed - artifacts feature disabled
 import AgentTool from './AgentTool';
 import CodeForm from './Code/Form';
 import MCPTools from './MCPTools';
@@ -285,7 +285,6 @@ export default function AgentConfig() {
         </div>
         {(codeEnabled ||
           fileSearchEnabled ||
-          artifactsEnabled ||
           contextEnabled ||
           webSearchEnabled) && (
           <div className="mb-4 flex w-full flex-col items-start gap-3">
@@ -298,8 +297,7 @@ export default function AgentConfig() {
             {webSearchEnabled && <SearchForm />}
             {/* File Context */}
             {contextEnabled && <FileContext agent_id={agent_id} files={context_files} />}
-            {/* Artifacts */}
-            {artifactsEnabled && <Artifacts />}
+            {/* Artifacts - Removed */}
             {/* File Search */}
             {fileSearchEnabled && <FileSearch agent_id={agent_id} files={knowledge_files} />}
           </div>

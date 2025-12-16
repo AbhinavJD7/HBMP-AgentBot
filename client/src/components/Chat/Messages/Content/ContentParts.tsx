@@ -7,7 +7,7 @@ import type {
   Agents,
 } from 'librechat-data-provider';
 import { MessageContext, SearchContext } from '~/Providers';
-import MemoryArtifacts from './MemoryArtifacts';
+// import MemoryArtifacts from './MemoryArtifacts'; // Removed - artifacts feature disabled
 import Sources from '~/components/Web/Sources';
 import { mapAttachments } from '~/utils/map';
 import { EditTextPart } from './Parts';
@@ -98,7 +98,7 @@ const ContentParts = memo(
     return (
       <>
         <SearchContext.Provider value={{ searchResults }}>
-          <MemoryArtifacts attachments={attachments} />
+          {/* <MemoryArtifacts attachments={attachments} /> */} {/* Removed - artifacts feature disabled */}
           <Sources messageId={messageId} conversationId={conversationId || undefined} />
           {content.map((part, idx) => {
             if (!part) {

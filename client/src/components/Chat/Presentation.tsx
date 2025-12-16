@@ -5,7 +5,7 @@ import type { ExtendedFile } from '~/common';
 import { useDeleteFilesMutation } from '~/data-provider';
 import DragDropWrapper from '~/components/Chat/Input/Files/DragDropWrapper';
 import { EditorProvider, SidePanelProvider, ArtifactsProvider } from '~/Providers';
-import Artifacts from '~/components/Artifacts/Artifacts';
+// import Artifacts from '~/components/Artifacts/Artifacts'; // Removed - artifacts feature disabled
 import { SidePanelGroup } from '~/components/SidePanel';
 import { useSetFilesToDelete } from '~/hooks';
 import store from '~/store';
@@ -58,21 +58,22 @@ export default function Presentation({ children }: { children: React.ReactNode }
   const fullCollapse = useMemo(() => localStorage.getItem('fullPanelCollapse') === 'true', []);
 
   /**
-   * Memoize artifacts JSX to prevent recreating it on every render
-   * This is critical for performance - prevents entire artifact tree from re-rendering
+   * Artifacts feature disabled - returning null to reduce bundle size
    */
   const artifactsElement = useMemo(() => {
-    if (artifactsVisibility === true && Object.keys(artifacts ?? {}).length > 0) {
-      return (
-        <ArtifactsProvider>
-          <EditorProvider>
-            <Artifacts />
-          </EditorProvider>
-        </ArtifactsProvider>
-      );
-    }
+    // Artifacts feature removed to reduce build memory usage
     return null;
-  }, [artifactsVisibility, artifacts]);
+    // if (artifactsVisibility === true && Object.keys(artifacts ?? {}).length > 0) {
+    //   return (
+    //     <ArtifactsProvider>
+    //       <EditorProvider>
+    //         <Artifacts />
+    //       </EditorProvider>
+    //     </ArtifactsProvider>
+    //   );
+    // }
+    // return null;
+  }, []);
 
   return (
     <DragDropWrapper className="relative flex w-full grow overflow-hidden bg-presentation">

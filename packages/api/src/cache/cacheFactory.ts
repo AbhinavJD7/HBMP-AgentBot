@@ -28,7 +28,9 @@ import { violationFile } from './keyvFiles';
 export const standardCache = (namespace: string, ttl?: number, fallbackStore?: object): Keyv => {
   if (keyvRedisClient && !cacheConfig.FORCED_IN_MEMORY_CACHE_NAMESPACES?.includes(namespace)) {
     try {
-      const keyvRedis = new KeyvRedis(keyvRedisClient);
+      // Type assertion needed due to type incompatibility between @redis/client and @keyv/redis
+      // @keyv/redis accepts the client at runtime, but TypeScript types don't align perfectly
+      const keyvRedis = new KeyvRedis(keyvRedisClient as any);
       const cache = new Keyv(keyvRedis, { namespace, ttl });
       keyvRedis.namespace = cacheConfig.REDIS_KEY_PREFIX;
       keyvRedis.keyPrefixSeparator = cacheConfig.GLOBAL_PREFIX_SEPARATOR;
