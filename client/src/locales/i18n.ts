@@ -2,85 +2,63 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import your JSON translations
+// Only import English translation statically (most common, ~50KB)
+// Other locales will be loaded dynamically when needed to reduce initial bundle size
 import translationEn from './en/translation.json';
-import translationAr from './ar/translation.json';
-import translationCa from './ca/translation.json';
-import translationCs from './cs/translation.json';
-import translationDa from './da/translation.json';
-import translationDe from './de/translation.json';
-import translationEs from './es/translation.json';
-import translationEt from './et/translation.json';
-import translationFa from './fa/translation.json';
-import translationFr from './fr/translation.json';
-import translationIt from './it/translation.json';
-import translationPl from './pl/translation.json';
-import translationPt_BR from './pt-BR/translation.json';
-import translationPt_PT from './pt-PT/translation.json';
-import translationRu from './ru/translation.json';
-import translationJa from './ja/translation.json';
-import translationKa from './ka/translation.json';
-import translationSv from './sv/translation.json';
-import translationKo from './ko/translation.json';
-import translationLv from './lv/translation.json';
-import translationTh from './th/translation.json';
-import translationTr from './tr/translation.json';
-import translationUg from './ug/translation.json';
-import translationVi from './vi/translation.json';
-import translationNl from './nl/translation.json';
-import translationId from './id/translation.json';
-import translationHe from './he/translation.json';
-import translationHu from './hu/translation.json';
-import translationHy from './hy/translation.json';
-import translationFi from './fi/translation.json';
-import translationZh_Hans from './zh-Hans/translation.json';
-import translationZh_Hant from './zh-Hant/translation.json';
-import translationBo from './bo/translation.json';
-import translationUk from './uk/translation.json';
-import translationBs from './bs/translation.json';
-import translationNb from './nb/translation.json';
-import translationSl from './sl/translation.json';
 
 export const defaultNS = 'translation';
 
-export const resources = {
+// Lazy load locale translations - only load when language changes
+const loadLocale = async (lng: string) => {
+  try {
+    switch (lng) {
+      case 'ar': return (await import('./ar/translation.json')).default;
+      case 'bs': return (await import('./bs/translation.json')).default;
+      case 'ca': return (await import('./ca/translation.json')).default;
+      case 'cs': return (await import('./cs/translation.json')).default;
+      case 'zh-Hans': return (await import('./zh-Hans/translation.json')).default;
+      case 'zh-Hant': return (await import('./zh-Hant/translation.json')).default;
+      case 'da': return (await import('./da/translation.json')).default;
+      case 'de': return (await import('./de/translation.json')).default;
+      case 'es': return (await import('./es/translation.json')).default;
+      case 'et': return (await import('./et/translation.json')).default;
+      case 'fa': return (await import('./fa/translation.json')).default;
+      case 'fr': return (await import('./fr/translation.json')).default;
+      case 'it': return (await import('./it/translation.json')).default;
+      case 'nb': return (await import('./nb/translation.json')).default;
+      case 'pl': return (await import('./pl/translation.json')).default;
+      case 'pt-BR': return (await import('./pt-BR/translation.json')).default;
+      case 'pt-PT': return (await import('./pt-PT/translation.json')).default;
+      case 'ru': return (await import('./ru/translation.json')).default;
+      case 'ja': return (await import('./ja/translation.json')).default;
+      case 'ka': return (await import('./ka/translation.json')).default;
+      case 'sv': return (await import('./sv/translation.json')).default;
+      case 'ko': return (await import('./ko/translation.json')).default;
+      case 'lv': return (await import('./lv/translation.json')).default;
+      case 'th': return (await import('./th/translation.json')).default;
+      case 'tr': return (await import('./tr/translation.json')).default;
+      case 'ug': return (await import('./ug/translation.json')).default;
+      case 'vi': return (await import('./vi/translation.json')).default;
+      case 'nl': return (await import('./nl/translation.json')).default;
+      case 'id': return (await import('./id/translation.json')).default;
+      case 'he': return (await import('./he/translation.json')).default;
+      case 'hu': return (await import('./hu/translation.json')).default;
+      case 'hy': return (await import('./hy/translation.json')).default;
+      case 'fi': return (await import('./fi/translation.json')).default;
+      case 'bo': return (await import('./bo/translation.json')).default;
+      case 'sl': return (await import('./sl/translation.json')).default;
+      case 'uk': return (await import('./uk/translation.json')).default;
+      default: return null;
+    }
+  } catch (error) {
+    console.warn(`Failed to load locale ${lng}:`, error);
+    return null;
+  }
+};
+
+// Start with only English to reduce initial bundle size (~2.3 MB saved)
+const initialResources = {
   en: { translation: translationEn },
-  ar: { translation: translationAr },
-  bs: { translation: translationBs },
-  ca: { translation: translationCa },
-  cs: { translation: translationCs },
-  'zh-Hans': { translation: translationZh_Hans },
-  'zh-Hant': { translation: translationZh_Hant },
-  da: { translation: translationDa },
-  de: { translation: translationDe },
-  es: { translation: translationEs },
-  et: { translation: translationEt },
-  fa: { translation: translationFa },
-  fr: { translation: translationFr },
-  it: { translation: translationIt },
-  nb: { translation: translationNb },
-  pl: { translation: translationPl },
-  'pt-BR': { translation: translationPt_BR },
-  'pt-PT': { translation: translationPt_PT },
-  ru: { translation: translationRu },
-  ja: { translation: translationJa },
-  ka: { translation: translationKa },
-  sv: { translation: translationSv },
-  ko: { translation: translationKo },
-  lv: { translation: translationLv },
-  th: { translation: translationTh },
-  tr: { translation: translationTr },
-  ug: { translation: translationUg },
-  vi: { translation: translationVi },
-  nl: { translation: translationNl },
-  id: { translation: translationId },
-  he: { translation: translationHe },
-  hu: { translation: translationHu },
-  hy: { translation: translationHy },
-  fi: { translation: translationFi },
-  bo: { translation: translationBo },
-  sl: { translation: translationSl },
-  uk: { translation: translationUk },
 } as const;
 
 i18n
@@ -97,8 +75,28 @@ i18n
     ns: ['translation'],
     debug: false,
     defaultNS,
-    resources,
+    resources: initialResources,
     interpolation: { escapeValue: false },
   });
+
+// Load locale dynamically when language changes
+i18n.on('languageChanged', async (lng) => {
+  if (lng !== 'en' && !i18n.hasResourceBundle(lng, 'translation')) {
+    const translation = await loadLocale(lng);
+    if (translation) {
+      i18n.addResourceBundle(lng, 'translation', translation, true, true);
+    }
+  }
+});
+
+// Preload the detected language if not English
+const detectedLng = i18n.language || 'en';
+if (detectedLng !== 'en') {
+  loadLocale(detectedLng).then((translation) => {
+    if (translation) {
+      i18n.addResourceBundle(detectedLng, 'translation', translation, true, true);
+    }
+  });
+}
 
 export default i18n;

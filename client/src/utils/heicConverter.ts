@@ -1,4 +1,5 @@
-import { heicTo, isHeic } from 'heic-to';
+// Lazy load heic-to to reduce initial bundle size (2.18 MB)
+// Only load when HEIC files are actually detected
 
 /**
  * Check if a file is in HEIC format
@@ -6,12 +7,25 @@ import { heicTo, isHeic } from 'heic-to';
  * @returns Promise<boolean> - True if the file is HEIC
  */
 export const isHEICFile = async (file: File): Promise<boolean> => {
+  // Fast path: check mime type first (no library needed)
+  if (file.type === 'image/heic' || file.type === 'image/heif') {
+    return true;
+  }
+  
+  // Check file extension as fallback
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith('.heic') || fileName.endsWith('.heif')) {
+    return true;
+  }
+  
+  // Only load heic-to library if we suspect it might be HEIC
+  // This avoids loading 2.18 MB unless actually needed
   try {
+    const { isHeic } = await import('heic-to');
     return await isHeic(file);
   } catch (error) {
     console.warn('Error checking if file is HEIC:', error);
-    // Fallback to mime type check
-    return file.type === 'image/heic' || file.type === 'image/heif';
+    return false;
   }
 };
 
@@ -31,6 +45,9 @@ export const convertHEICToJPEG = async (
     // Report conversion start
     onProgress?.(0.3);
 
+    // Lazy load heic-to only when conversion is actually needed
+    const { heicTo } = await import('heic-to');
+    
     const convertedBlob = await heicTo({
       blob: file,
       type: 'image/jpeg',

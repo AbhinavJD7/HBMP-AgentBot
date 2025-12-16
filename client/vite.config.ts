@@ -52,7 +52,8 @@ export default defineConfig(({ command }) => ({
           'assets/maskable-icon.png',
           'manifest.webmanifest',
         ],
-        globIgnores: ['images/**/*', '**/*.map', 'index.html'],
+        globIgnores: ['images/**/*', '**/*.map'],
+        navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Increased to 10MB to accommodate large vendor chunks
         navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
       },
@@ -107,6 +108,8 @@ export default defineConfig(({ command }) => ({
     cssCodeSplit: true,
     reportCompressedSize: false, // Don't calculate compressed sizes to save memory
     rollupOptions: {
+      // Reduce parallel operations to save memory
+      maxParallelFileOps: 2, // Limit parallel file operations
       preserveEntrySignatures: 'allow-extension', // Less memory intensive than 'strict'
       output: {
         manualChunks(id: string) {
@@ -128,9 +131,8 @@ export default defineConfig(({ command }) => ({
             if (normalizedId.includes('@dicebear')) {
               return 'avatars';
             }
-            if (normalizedId.includes('react-dnd') || normalizedId.includes('react-flip-toolkit')) {
-              return 'react-interactions';
-            }
+            // Keep react-dnd and react-flip-toolkit with React to avoid dependency issues
+            // They will be in vendor chunk if React is already chunked
             if (normalizedId.includes('react-hook-form')) {
               return 'forms';
             }
@@ -218,6 +220,57 @@ export default defineConfig(({ command }) => ({
             }
             if (normalizedId.includes('@headlessui')) {
               return 'headlessui';
+            }
+
+            // Split large vendor libraries into separate chunks
+            if (normalizedId.includes('@mcp-ui')) {
+              return 'mcp-ui';
+            }
+            // Don't split React - keep it in vendor to avoid createContext errors
+            // React and react-dom should stay together for proper module resolution
+            if (normalizedId.includes('@radix-ui')) {
+              return 'radix-ui';
+            }
+            // Split large utility libraries
+            if (normalizedId.includes('recoil')) {
+              return 'recoil';
+            }
+            if (normalizedId.includes('jotai')) {
+              return 'jotai';
+            }
+            // Split markdown and related
+            if (normalizedId.includes('remark') || normalizedId.includes('rehype') || normalizedId.includes('micromark')) {
+              return 'markdown-core';
+            }
+            // Split UI libraries
+            if (normalizedId.includes('@ariakit')) {
+              return 'ariakit';
+            }
+            if (normalizedId.includes('lucide-react')) {
+              return 'icons';
+            }
+            // Split heavy image processing
+            if (normalizedId.includes('html-to-image')) {
+              return 'image-processing';
+            }
+            // Split i18next and locale files
+            if (normalizedId.includes('i18next') || normalizedId.includes('react-i18next')) {
+              return 'i18n-core';
+            }
+            // Split heavy libraries
+            if (normalizedId.includes('react-markdown')) {
+              return 'markdown-renderer';
+            }
+            if (normalizedId.includes('react-router')) {
+              return 'router';
+            }
+            // Split validation libraries
+            if (normalizedId.includes('zod')) {
+              return 'validation-core';
+            }
+            // Split date/time libraries
+            if (normalizedId.includes('date-fns')) {
+              return 'date-utils';
             }
 
             // Everything else falls into a generic vendor chunk.

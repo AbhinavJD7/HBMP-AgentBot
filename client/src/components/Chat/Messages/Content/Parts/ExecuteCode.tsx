@@ -77,30 +77,29 @@ export default function ExecuteCode({
       return null;
     }
 
-    // Try to detect Plotly JSON format in code blocks
-    const plotlyMatch = output.match(/```(?:json|plotly)?\s*(\{[\s\S]*?"type"\s*:\s*"plotly"[\s\S]*?\})\s*```/);
-    if (plotlyMatch) {
-      try {
-        const parsed = JSON.parse(plotlyMatch[1]);
-        return { type: 'plotly', ...parsed };
-      } catch {
-        // Continue to other detection methods
-      }
-    }
+    // Plotly and Chart.js support removed to reduce bundle size
+    // const plotlyMatch = output.match(/```(?:json|plotly)?\s*(\{[\s\S]*?"type"\s*:\s*"plotly"[\s\S]*?\})\s*```/);
+    // if (plotlyMatch) {
+    //   try {
+    //     const parsed = JSON.parse(plotlyMatch[1]);
+    //     return { type: 'plotly', ...parsed };
+    //   } catch {
+    //     // Continue to other detection methods
+    //   }
+    // }
 
-    // Try to detect Chart.js format
-    const chartjsMatch = output.match(/```(?:json|chartjs)?\s*(\{[\s\S]*?"type"\s*:\s*"chartjs"[\s\S]*?\})\s*```/);
-    if (chartjsMatch) {
-      try {
-        const parsed = JSON.parse(chartjsMatch[1]);
-        return { type: 'chartjs', ...parsed };
-      } catch {
-        // Continue to other detection methods
-      }
-    }
+    // const chartjsMatch = output.match(/```(?:json|chartjs)?\s*(\{[\s\S]*?"type"\s*:\s*"chartjs"[\s\S]*?\})\s*```/);
+    // if (chartjsMatch) {
+    //   try {
+    //     const parsed = JSON.parse(chartjsMatch[1]);
+    //     return { type: 'chartjs', ...parsed };
+    //   } catch {
+    //     // Continue to other detection methods
+    //   }
+    // }
 
-    // Try to detect inline JSON chart data
-    const jsonMatch = output.match(/\{[\s\S]*?"type"\s*:\s*"(?:plotly|chartjs)"[\s\S]*?\}/);
+    // Try to detect inline JSON chart data (only for image/json types now)
+    const jsonMatch = output.match(/\{[\s\S]*?"type"\s*:\s*"(?:image|json)"[\s\S]*?\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);

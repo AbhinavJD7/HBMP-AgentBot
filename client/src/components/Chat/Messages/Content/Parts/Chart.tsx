@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, memo } from 'react';
 import { cn } from '~/utils';
 
 export interface ChartData {
-  type: 'plotly' | 'chartjs' | 'json' | 'image';
+  type: 'json' | 'image'; // Removed plotly and chartjs to reduce bundle size
   data: any;
   layout?: any;
   config?: any;
@@ -15,8 +15,9 @@ interface ChartProps {
 }
 
 /**
- * Chart component for rendering various chart types
- * Supports Plotly, Chart.js, and image-based charts
+ * Chart component for rendering chart types
+ * Supports image-based charts and JSON data display
+ * Note: Plotly and Chart.js support removed to reduce bundle size
  */
 const Chart = memo(({ chartData, className }: ChartProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -48,70 +49,16 @@ const Chart = memo(({ chartData, className }: ChartProps) => {
         parsedData = chartData;
       }
 
-      const { type, data, layout, config } = parsedData;
+      const { type, data } = parsedData;
 
-      if (type === 'plotly') {
-        // Dynamically import Plotly for better performance
-        import('plotly.js-dist-min')
-          .then((Plotly) => {
-            if (!chartRef.current) return;
+      // Plotly and Chart.js support removed to reduce bundle size
+      if (type === 'plotly' || type === 'chartjs') {
+        setError('Chart library support removed. Please use image or json type.');
+        setIsLoading(false);
+        return;
+      }
 
-            const plotData = Array.isArray(data) ? data : [data];
-            const plotLayout = layout || {
-              autosize: true,
-              margin: { l: 50, r: 50, t: 50, b: 50 },
-              paper_bgcolor: 'transparent',
-              plot_bgcolor: 'transparent',
-            };
-
-            const plotConfig = config || {
-              responsive: true,
-              displayModeBar: true,
-              displaylogo: false,
-            };
-
-            Plotly.newPlot(chartRef.current, plotData, plotLayout, plotConfig);
-            setIsLoading(false);
-          })
-          .catch((err) => {
-            console.error('Error loading Plotly:', err);
-            setError('Failed to load chart library');
-            setIsLoading(false);
-          });
-      } else if (type === 'chartjs') {
-        // Dynamically import Chart.js
-        import('chart.js/auto')
-          .then((ChartJS) => {
-            if (!chartRef.current) return;
-
-            const canvas = document.createElement('canvas');
-            chartRef.current.innerHTML = '';
-            chartRef.current.appendChild(canvas);
-
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              setError('Failed to get canvas context');
-              setIsLoading(false);
-              return;
-            }
-
-            new ChartJS.Chart(ctx, {
-              ...data,
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                ...config,
-              },
-            });
-
-            setIsLoading(false);
-          })
-          .catch((err) => {
-            console.error('Error loading Chart.js:', err);
-            setError('Failed to load chart library');
-            setIsLoading(false);
-          });
-      } else if (type === 'image' || (typeof data === 'string' && data.startsWith('data:image'))) {
+      if (type === 'image' || (typeof data === 'string' && data.startsWith('data:image'))) {
         // Render image-based chart
         if (!chartRef.current) return;
 
