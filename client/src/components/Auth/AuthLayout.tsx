@@ -60,10 +60,10 @@ function AuthLayout({
     <div className="relative flex min-h-screen flex-col bg-white dark:bg-gray-900">
       <Banner />
       <BlinkAnimation active={isFetching}>
-        <div className="mt-6 h-10 w-full bg-cover">
+        <div className="mt-6 flex h-40 w-full items-center justify-center bg-cover">
           <img
             src="assets/Icon HBMP[1].png"
-            className="h-full w-full object-contain"
+            className="h-full max-w-xs object-contain"
             alt={localize('com_ui_logo', { 0: startupConfig?.appTitle ?? 'HBMP AgentBot' })}
           />
         </div>
