@@ -138,3 +138,8 @@ helm/**/.values.yaml
 /.tabnine/
 /.codeium
 *.local.md
+
+# Capacitor
+ios/
+android/
+.capacitor/

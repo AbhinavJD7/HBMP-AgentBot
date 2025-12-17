@@ -20,6 +20,7 @@ import { TermsAndConditionsModal } from '~/components/ui';
 import { Nav, MobileNav } from '~/components/Nav';
 import { useHealthCheck } from '~/data-provider';
 import { Banner } from '~/components/Banners';
+import { Capacitor } from '@capacitor/core';
 
 export default function Root() {
   const [showTerms, setShowTerms] = useState(false);
@@ -44,6 +45,11 @@ export default function Root() {
   });
 
   useSearchEnabled(isAuthenticated);
+  
+  // Hardcode status bar height for Capacitor apps
+  // Android status bar is typically 24px, but can be up to 48px on some devices
+  // Using 48px to ensure it works on all devices including notched ones
+  const statusBarHeight = Capacitor.isNativePlatform() ? 48 : 0;
 
   useEffect(() => {
     if (termsData) {
@@ -71,7 +77,13 @@ export default function Root() {
           <AgentsMapContext.Provider value={agentsMap}>
             <PromptGroupsProvider>
               <Banner onHeightChange={setBannerHeight} />
-              <div className="flex" style={{ height: `calc(100dvh - ${bannerHeight}px)` }}>
+              <div 
+                className="flex" 
+                style={{ 
+                  height: `calc(100dvh - ${bannerHeight}px)`,
+                  paddingTop: `${statusBarHeight}px`,
+                }}
+              >
                 <div className="relative z-0 flex h-full w-full overflow-hidden">
                   <Nav navVisible={navVisible} setNavVisible={setNavVisible} />
                   <div className="relative flex h-full max-w-full flex-1 flex-col overflow-hidden">

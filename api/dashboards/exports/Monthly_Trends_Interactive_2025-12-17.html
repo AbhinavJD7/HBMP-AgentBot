@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Trends Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Fallback: Ensure Chart.js loads even if CDN is slow
+        (function() {
+            let attempts = 0;
+            const maxAttempts = 50;
+            const checkChart = setInterval(function() {
+                attempts++;
+                if (typeof Chart !== 'undefined') {
+                    clearInterval(checkChart);
+                    console.log('Chart.js loaded successfully');
+                    // Trigger initialization if DOM is ready
+                    if (document.readyState !== 'loading' && typeof initializeDashboard === 'function') {
+                        setTimeout(initializeDashboard, 100);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkChart);
+                    console.error('Chart.js failed to load after ' + maxAttempts + ' attempts');
+                    // Try alternative CDN
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+                    script.onload = function() {
+                        console.log('Chart.js loaded from alternative CDN');
+                        if (typeof initializeDashboard === 'function') {
+                            setTimeout(initializeDashboard, 100);
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+            }, 100);
+        })();
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #1a202c;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .export-date {
+            margin-top: 12px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .dashboard-content {
+            padding: 32px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            background: #f7fafc;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        
+        .button {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .button:hover {
+            background: #e2e8f0;
+        }
+        
+        .button.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        .chart-container {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            height: 400px;
+            position: relative;
+        }
+        
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 330px;
+            width: 100%;
+        }
+        
+        .chart-container canvas {
+            max-height: 100% !important;
+            width: 100% !important;
+        }
+        
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 12px;
+        }
+        
+        .filters-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .filters-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .filter-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .filter-item strong {
+            color: #4a5568;
+            margin-right: 8px;
+        }
+        
+        .data-section {
+            margin-top: 32px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.2s;
+            position: relative;
+            bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th {
+            padding: 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+        
+        tbody tr:hover {
+            background-color: #f7fafc;
+        }
+        
+        .search-box {
+            margin-bottom: 16px;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .search-icon-wrapper {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #718096;
+        }
+        
+        .print-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+        }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Monthly Trends Dashboard</h1>
+            <div class="subtitle">Fully Interactive Dashboard - All Charts & Data Embedded</div>
+            <div class="export-date">Exported: December 17, 2025 at 03:47 PM</div>
+        </div>
+
+        <div class="dashboard-content">
+            <div id="dashboard-root"></div>
+        </div>
+    </div>
+
+    <button class="print-button" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>Print / Save PDF</button>
+
+    <script>
+        // Embedded data for all years and modes
+        const ALL_DATA = {
+  "2015": {
+    "vs Prior": {
+      "monthlySales": [
+        {
+          "month": "APR 2016",
+          "sales": 38147261,
+          "salesPriorTarget": 30014451,
+          "grossProfitPercent": 10.98654
+        },
+        {
+          "month": "MAY 2016",
+          "sales": 33417682,
+          "salesPriorTarget": 31015358,
+          "grossProfitPercent": 26.59366
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 30582741,
+          "salesPriorTarget": 29724098,
+          "grossProfitPercent": 36.20779
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 30734538,
+          "salesPriorTarget": 29445904,
+          "grossProfitPercent": 16.22861
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 35250861,
+          "salesPriorTarget": 30768177,
+          "grossProfitPercent": 20.06495
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 35744853,
+          "salesPriorTarget": 28500035,
+          "grossProfitPercent": 35.44168
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2015 Q1",
+          "grossProfit": 24514079,
+          "gpPriorTarget": 23324790,
+          "sales": 24514079
+        },
+        {
+          "quarter": "2015 Q2",
+          "grossProfit": 21484611,
+          "gpPriorTarget": 21932579,
+          "sales": 21484611
+        },
+        {
+          "quarter": "2015 Q3",
+          "grossProfit": 21449461,
+          "gpPriorTarget": 22332199,
+          "sales": 21449461
+        },
+        {
+          "quarter": "2015 Q4",
+          "grossProfit": 21136129,
+          "gpPriorTarget": 21242109,
+          "sales": 21136129
+        }
+      ]
+    },
+    "vs Target": {
+      "monthlySales": [
+        {
+          "month": "APR 2016",
+          "sales": 38147261,
+          "salesPriorTarget": 32000000,
+          "grossProfitPercent": 10.98654
+        },
+        {
+          "month": "MAY 2016",
+          "sales": 33417682,
+          "salesPriorTarget": 33000000,
+          "grossProfitPercent": 26.59366
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 30582741,
+          "salesPriorTarget": 31000000,
+          "grossProfitPercent": 36.20779
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 30734538,
+          "salesPriorTarget": 30500000,
+          "grossProfitPercent": 16.22861
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 35250861,
+          "salesPriorTarget": 32000000,
+          "grossProfitPercent": 20.06495
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 35744853,
+          "salesPriorTarget": 30000000,
+          "grossProfitPercent": 35.44168
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2015 Q1",
+          "grossProfit": 24514079,
+          "gpPriorTarget": 25000000,
+          "sales": 24514079
+        },
+        {
+          "quarter": "2015 Q2",
+          "grossProfit": 21484611,
+          "gpPriorTarget": 23000000,
+          "sales": 21484611
+        },
+        {
+          "quarter": "2015 Q3",
+          "grossProfit": 21449461,
+          "gpPriorTarget": 23000000,
+          "sales": 21449461
+        },
+        {
+          "quarter": "2015 Q4",
+          "grossProfit": 21136129,
+          "gpPriorTarget": 22000000,
+          "sales": 21136129
+        }
+      ]
+    }
+  },
+  "2016": {
+    "vs Prior": {
+      "monthlySales": [
+        {
+          "month": "MAY 2016",
+          "sales": 40000000,
+          "salesPriorTarget": 35000000,
+          "grossProfitPercent": 28
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 35000000,
+          "salesPriorTarget": 32000000,
+          "grossProfitPercent": 32
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 38000000,
+          "salesPriorTarget": 34000000,
+          "grossProfitPercent": 30
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 42000000,
+          "salesPriorTarget": 38000000,
+          "grossProfitPercent": 35
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 39000000,
+          "salesPriorTarget": 36000000,
+          "grossProfitPercent": 33
+        },
+        {
+          "month": "OCT 2016",
+          "sales": 41000000,
+          "salesPriorTarget": 37000000,
+          "grossProfitPercent": 31
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2016 Q1",
+          "grossProfit": 26000000,
+          "gpPriorTarget": 24000000,
+          "sales": 26000000
+        },
+        {
+          "quarter": "2016 Q2",
+          "grossProfit": 24000000,
+          "gpPriorTarget": 23000000,
+          "sales": 24000000
+        },
+        {
+          "quarter": "2016 Q3",
+          "grossProfit": 25000000,
+          "gpPriorTarget": 24000000,
+          "sales": 25000000
+        },
+        {
+          "quarter": "2016 Q4",
+          "grossProfit": 27000000,
+          "gpPriorTarget": 25000000,
+          "sales": 27000000
+        }
+      ]
+    },
+    "vs Target": {
+      "monthlySales": [
+        {
+          "month": "MAY 2016",
+          "sales": 40000000,
+          "salesPriorTarget": 38000000,
+          "grossProfitPercent": 28
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 35000000,
+          "salesPriorTarget": 35000000,
+          "grossProfitPercent": 32
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 38000000,
+          "salesPriorTarget": 36000000,
+          "grossProfitPercent": 30
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 42000000,
+          "salesPriorTarget": 40000000,
+          "grossProfitPercent": 35
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 39000000,
+          "salesPriorTarget": 38000000,
+          "grossProfitPercent": 33
+        },
+        {
+          "month": "OCT 2016",
+          "sales": 41000000,
+          "salesPriorTarget": 39000000,
+          "grossProfitPercent": 31
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2016 Q1",
+          "grossProfit": 26000000,
+          "gpPriorTarget": 26000000,
+          "sales": 26000000
+        },
+        {
+          "quarter": "2016 Q2",
+          "grossProfit": 24000000,
+          "gpPriorTarget": 25000000,
+          "sales": 24000000
+        },
+        {
+          "quarter": "2016 Q3",
+          "grossProfit": 25000000,
+          "gpPriorTarget": 26000000,
+          "sales": 25000000
+        },
+        {
+          "quarter": "2016 Q4",
+          "grossProfit": 27000000,
+          "gpPriorTarget": 28000000,
+          "sales": 27000000
+        }
+      ]
+    }
+  },
+  "2017": {
+    "vs Prior": {
+      "monthlySales": [
+        {
+          "month": "APR 2016",
+          "sales": 33684519.95798395,
+          "salesPriorTarget": 31536353.31629215,
+          "grossProfitPercent": 32.212181802902194
+        },
+        {
+          "month": "MAY 2016",
+          "sales": 39526546.743065104,
+          "salesPriorTarget": 31850002.845188297,
+          "grossProfitPercent": 39.18006594046316
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 33208414.838033013,
+          "salesPriorTarget": 32703008.045866594,
+          "grossProfitPercent": 26.624929292607668
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 38197948.53444494,
+          "salesPriorTarget": 29620431.72064436,
+          "grossProfitPercent": 17.722934538813583
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 37687915.67043982,
+          "salesPriorTarget": 32209415.80685475,
+          "grossProfitPercent": 26.780538595797914
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 30700229.967171676,
+          "salesPriorTarget": 25150982.47689036,
+          "grossProfitPercent": 16.238607615540936
+        },
+        {
+          "month": "OCT 2016",
+          "sales": 30173385.392863557,
+          "salesPriorTarget": 27274668.192581117,
+          "grossProfitPercent": 17.807052333049594
+        },
+        {
+          "month": "NOV 2016",
+          "sales": 32909765.54231103,
+          "salesPriorTarget": 27866545.98768009,
+          "grossProfitPercent": 22.401073464422467
+        },
+        {
+          "month": "DEC 2016",
+          "sales": 32619648.50811705,
+          "salesPriorTarget": 26056170.50475288,
+          "grossProfitPercent": 37.88021645334749
+        },
+        {
+          "month": "JAN 2017",
+          "sales": 36264540.46218512,
+          "salesPriorTarget": 28624507.182479266,
+          "grossProfitPercent": 10.73396981561233
+        },
+        {
+          "month": "FEB 2017",
+          "sales": 34844540.40294644,
+          "salesPriorTarget": 27550420.84666338,
+          "grossProfitPercent": 34.45977096116732
+        },
+        {
+          "month": "MAR 2017",
+          "sales": 39242758.069762334,
+          "salesPriorTarget": 31459105.441646576,
+          "grossProfitPercent": 16.47543221838323
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2015 Q1",
+          "grossProfit": 55655696.85385915,
+          "gpPriorTarget": 74080515.02063805,
+          "sales": 77927404.6146844
+        },
+        {
+          "quarter": "2015 Q2",
+          "grossProfit": 45965952.58455688,
+          "gpPriorTarget": 70141520.64999582,
+          "sales": 94382731.89609087
+        },
+        {
+          "quarter": "2015 Q3",
+          "grossProfit": 44977663.17345315,
+          "gpPriorTarget": 63648206.04782708,
+          "sales": 73341903.31909874
+        },
+        {
+          "quarter": "2015 Q4",
+          "grossProfit": 56658568.630959965,
+          "gpPriorTarget": 52221314.69977006,
+          "sales": 88664519.29499418
+        },
+        {
+          "quarter": "2016 Q1",
+          "grossProfit": 42782010.21139338,
+          "gpPriorTarget": 60955738.293007895,
+          "sales": 68982720.9316489
+        },
+        {
+          "quarter": "2016 Q2",
+          "grossProfit": 55105253.723843455,
+          "gpPriorTarget": 54264747.43355814,
+          "sales": 97345929.95072937
+        },
+        {
+          "quarter": "2016 Q3",
+          "grossProfit": 58460553.81778707,
+          "gpPriorTarget": 62766259.370452546,
+          "sales": 72604058.87097786
+        },
+        {
+          "quarter": "2016 Q4",
+          "grossProfit": 42306208.30978371,
+          "gpPriorTarget": 63730933.72196208,
+          "sales": 65762246.54494825
+        },
+        {
+          "quarter": "2017 Q1",
+          "grossProfit": 42530137.76123813,
+          "gpPriorTarget": 57342596.245246544,
+          "sales": 97441431.47213337
+        },
+        {
+          "quarter": "2017 Q2",
+          "grossProfit": 47937661.568623185,
+          "gpPriorTarget": 50391575.3002293,
+          "sales": 103855050.23109221
+        },
+        {
+          "quarter": "2017 Q3",
+          "grossProfit": 46405162.11714636,
+          "gpPriorTarget": 64735493.52457164,
+          "sales": 108600383.0982799
+        },
+        {
+          "quarter": "2017 Q4",
+          "grossProfit": 59523431.284728505,
+          "gpPriorTarget": 61452467.605291456,
+          "sales": 106072372.21791013
+        },
+        {
+          "quarter": "2018 Q1",
+          "grossProfit": 46095332.658276066,
+          "gpPriorTarget": 66914567.45402348,
+          "sales": 76378901.54797766
+        }
+      ]
+    },
+    "vs Target": {
+      "monthlySales": [
+        {
+          "month": "APR 2016",
+          "sales": 33684519.95798395,
+          "salesPriorTarget": 32000293.960084748,
+          "grossProfitPercent": 32.212181802902194
+        },
+        {
+          "month": "MAY 2016",
+          "sales": 39526546.743065104,
+          "salesPriorTarget": 37550219.40591185,
+          "grossProfitPercent": 39.18006594046316
+        },
+        {
+          "month": "JUN 2016",
+          "sales": 33208414.838033013,
+          "salesPriorTarget": 31547994.096131362,
+          "grossProfitPercent": 26.624929292607668
+        },
+        {
+          "month": "JUL 2016",
+          "sales": 38197948.53444494,
+          "salesPriorTarget": 36288051.10772269,
+          "grossProfitPercent": 17.722934538813583
+        },
+        {
+          "month": "AUG 2016",
+          "sales": 37687915.67043982,
+          "salesPriorTarget": 35803519.88691782,
+          "grossProfitPercent": 26.780538595797914
+        },
+        {
+          "month": "SEP 2016",
+          "sales": 30700229.967171676,
+          "salesPriorTarget": 29165218.46881309,
+          "grossProfitPercent": 16.238607615540936
+        },
+        {
+          "month": "OCT 2016",
+          "sales": 30173385.392863557,
+          "salesPriorTarget": 28664716.123220377,
+          "grossProfitPercent": 17.807052333049594
+        },
+        {
+          "month": "NOV 2016",
+          "sales": 32909765.54231103,
+          "salesPriorTarget": 31264277.265195478,
+          "grossProfitPercent": 22.401073464422467
+        },
+        {
+          "month": "DEC 2016",
+          "sales": 32619648.50811705,
+          "salesPriorTarget": 30988666.082711197,
+          "grossProfitPercent": 37.88021645334749
+        },
+        {
+          "month": "JAN 2017",
+          "sales": 36264540.46218512,
+          "salesPriorTarget": 34451313.439075865,
+          "grossProfitPercent": 10.73396981561233
+        },
+        {
+          "month": "FEB 2017",
+          "sales": 34844540.40294644,
+          "salesPriorTarget": 33102313.38279912,
+          "grossProfitPercent": 34.45977096116732
+        },
+        {
+          "month": "MAR 2017",
+          "sales": 39242758.069762334,
+          "salesPriorTarget": 37280620.16627421,
+          "grossProfitPercent": 16.47543221838323
+        }
+      ],
+      "grossProfit": [
+        {
+          "quarter": "2015 Q1",
+          "grossProfit": 55655696.85385915,
+          "gpPriorTarget": 52872912.01116619,
+          "sales": 77927404.6146844
+        },
+        {
+          "quarter": "2015 Q2",
+          "grossProfit": 45965952.58455688,
+          "gpPriorTarget": 43667654.95532903,
+          "sales": 94382731.89609087
+        },
+        {
+          "quarter": "2015 Q3",
+          "grossProfit": 44977663.17345315,
+          "gpPriorTarget": 42728780.01478049,
+          "sales": 73341903.31909874
+        },
+        {
+          "quarter": "2015 Q4",
+          "grossProfit": 56658568.630959965,
+          "gpPriorTarget": 53825640.199411966,
+          "sales": 88664519.29499418
+        },
+        {
+          "quarter": "2016 Q1",
+          "grossProfit": 42782010.21139338,
+          "gpPriorTarget": 40642909.70082371,
+          "sales": 68982720.9316489
+        },
+        {
+          "quarter": "2016 Q2",
+          "grossProfit": 55105253.723843455,
+          "gpPriorTarget": 52349991.03765128,
+          "sales": 97345929.95072937
+        },
+        {
+          "quarter": "2016 Q3",
+          "grossProfit": 58460553.81778707,
+          "gpPriorTarget": 55537526.126897715,
+          "sales": 72604058.87097786
+        },
+        {
+          "quarter": "2016 Q4",
+          "grossProfit": 42306208.30978371,
+          "gpPriorTarget": 40190897.89429452,
+          "sales": 65762246.54494825
+        },
+        {
+          "quarter": "2017 Q1",
+          "grossProfit": 42530137.76123813,
+          "gpPriorTarget": 40403630.87317622,
+          "sales": 97441431.47213337
+        },
+        {
+          "quarter": "2017 Q2",
+          "grossProfit": 47937661.568623185,
+          "gpPriorTarget": 45540778.490192026,
+          "sales": 103855050.23109221
+        },
+        {
+          "quarter": "2017 Q3",
+          "grossProfit": 46405162.11714636,
+          "gpPriorTarget": 44084904.01128904,
+          "sales": 108600383.0982799
+        },
+        {
+          "quarter": "2017 Q4",
+          "grossProfit": 59523431.284728505,
+          "gpPriorTarget": 56547259.72049208,
+          "sales": 106072372.21791013
+        },
+        {
+          "quarter": "2018 Q1",
+          "grossProfit": 46095332.658276066,
+          "gpPriorTarget": 43790566.02536226,
+          "sales": 76378901.54797766
+        }
+      ]
+    }
+  }
+};
+        const INITIAL_FILTERS = {
+  "selectedYear": "2017-18",
+  "comparisonMode": "vs Prior"
+};
+
+        let selectedYear = INITIAL_FILTERS.selectedYear || '2017';
+        let comparisonMode = INITIAL_FILTERS.comparisonMode || 'vs Prior';
+        let activeTab = 'monthlySales';
+        let searchTerm = '';
+        let monthlySalesChart = null;
+        let grossProfitChart = null;
+
+        // Initialize dashboard - wait for Chart.js to load
+        function initializeDashboard() {
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.log('Waiting for Chart.js to load...');
+                setTimeout(initializeDashboard, 100);
+                return;
+            }
+            
+            console.log('Chart.js loaded, initializing dashboard...');
+            renderDashboard();
+            // Delay chart creation to ensure DOM is ready
+            setTimeout(() => {
+                createCharts();
+            }, 200);
+        }
+
+        // Use both DOMContentLoaded and check for Chart.js
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initializeDashboard);
+        } else {
+            // DOM already loaded, but wait for Chart.js
+            initializeDashboard();
+        }
+
+        function renderDashboard() {
+            try {
+                const currentData = ALL_DATA[selectedYear] && ALL_DATA[selectedYear][comparisonMode] 
+                    ? ALL_DATA[selectedYear][comparisonMode]
+                    : { monthlySales: [], grossProfit: [] };
+
+                const html = `
+                <div class="card">
+                    <h2 class="card-title">Monthly Trends</h2>
+                    
+                    <div class="controls">
+                        <div class="button-group">
+                            <button class="button ${selectedYear === '2015' ? 'active' : ''}" onclick="changeYear('2015')">2015</button>
+                            <button class="button ${selectedYear === '2016' ? 'active' : ''}" onclick="changeYear('2016')">2016</button>
+                            <button class="button ${selectedYear === '2017' ? 'active' : ''}" onclick="changeYear('2017')">2017</button>
+                        </div>
+                        <div class="button-group">
+                            <button class="button ${comparisonMode === 'vs Prior' ? 'active' : ''}" onclick="changeMode('vs Prior')">vs Prior</button>
+                            <button class="button ${comparisonMode === 'vs Target' ? 'active' : ''}" onclick="changeMode('vs Target')">vs Target</button>
+                        </div>
+                    </div>
+
+                    <div class="filters-section">
+                        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Applied Filters</h3>
+                        <div class="filters-grid">
+                            <div class="filter-item">
+                                <strong>Selected Year:</strong> ${selectedYear}
+                            </div>
+                            <div class="filter-item">
+                                <strong>Comparison Mode:</strong> ${comparisonMode}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4 class="chart-title">Monthly Sales vs Prior / Target</h4>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="monthlySalesChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h4 class="chart-title">Gross Profit vs Prior / Target</h4>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="grossProfitChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-section">
+                    <h2 class="card-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>Dashboard Data</h2>
+                    
+                    <div class="tabs">
+                        <button class="tab ${activeTab === 'monthlySales' ? 'active' : ''}" onclick="changeTab('monthlySales')">Monthly Sales</button>
+                        <button class="tab ${activeTab === 'grossProfit' ? 'active' : ''}" onclick="changeTab('grossProfit')">Gross Profit</button>
+                    </div>
+
+                    <div class="search-box">
+                        <div class="search-icon-wrapper">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Search data..." oninput="handleSearch(event)" value="${searchTerm}">
+                    </div>
+
+                    <div id="tableContainer"></div>
+                </div>
+            `;
+
+                const root = document.getElementById('dashboard-root');
+                if (root) {
+                    root.innerHTML = html;
+                    renderTable();
+                } else {
+                    console.error('Dashboard root element not found');
+                }
+            } catch (error) {
+                console.error('Error rendering dashboard:', error);
+                const root = document.getElementById('dashboard-root');
+                if (root) {
+                    root.innerHTML = '<div style="padding: 40px; text-align: center; color: #e53e3e; background: #fed7d7; border-radius: 8px;"><h2>Error Loading Dashboard</h2><p>Please check the console for details.</p></div>';
+                }
+            }
+        }
+
+        function createCharts() {
+            // Add safety check for data
+            if (!ALL_DATA || !ALL_DATA[selectedYear] || !ALL_DATA[selectedYear][comparisonMode]) {
+                console.error('Data not available for', selectedYear, comparisonMode);
+                const container = document.getElementById('dashboard-root');
+                if (container) {
+                    container.innerHTML += '<div style="padding: 20px; color: #e53e3e; background: #fed7d7; border-radius: 8px; margin-top: 20px; display: flex; align-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>Data not available for selected filters</div>';
+                }
+                return;
+            }
+            
+            const currentData = ALL_DATA[selectedYear][comparisonMode];
+            
+            // Check if data arrays exist
+            if (!currentData.monthlySales || !currentData.grossProfit) {
+                console.error('Data structure incomplete');
+                return;
+            }
+            
+            // Safely destroy existing charts
+            try {
+                if (monthlySalesChart && typeof monthlySalesChart.destroy === 'function') {
+                    monthlySalesChart.destroy();
+                    monthlySalesChart = null;
+                }
+                if (grossProfitChart && typeof grossProfitChart.destroy === 'function') {
+                    grossProfitChart.destroy();
+                    grossProfitChart = null;
+                }
+            } catch (e) {
+                console.warn('Error destroying charts:', e);
+            }
+            
+            // Wait for DOM to be ready and Chart.js to be loaded
+            setTimeout(() => {
+                // Check Chart.js is available
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded');
+                    return;
+                }
+                
+                // Monthly Sales Chart
+                const ctx1 = document.getElementById('monthlySalesChart');
+                if (ctx1) {
+                    try {
+                        monthlySalesChart = new Chart(ctx1, {
+                            type: 'bar',
+                            data: {
+                                labels: currentData.monthlySales.map(d => d.month || ''),
+                                datasets: [
+                                    {
+                                        label: 'Sales',
+                                        data: currentData.monthlySales.map(d => d.sales || 0),
+                                        backgroundColor: '#3B82F6',
+                                        borderColor: '#3B82F6',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: comparisonMode === 'vs Prior' ? 'Prior Year' : 'Target',
+                                        data: currentData.monthlySales.map(d => d.salesPriorTarget || 0),
+                                        backgroundColor: '#FBBF24',
+                                        borderColor: '#FBBF24',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'GP %',
+                                        data: currentData.monthlySales.map(d => d.grossProfitPercent || 0),
+                                        type: 'line',
+                                        borderColor: '#10B981',
+                                        backgroundColor: 'transparent',
+                                        borderWidth: 2,
+                                        yAxisID: 'y1'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    },
+                                    tooltip: {
+                                        enabled: true
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        position: 'left',
+                                        title: {
+                                            display: true,
+                                            text: 'Sales / Prior/Target'
+                                        }
+                                    },
+                                    y1: {
+                                        beginAtZero: true,
+                                        position: 'right',
+                                        title: {
+                                            display: true,
+                                            text: 'Gross Profit %'
+                                        },
+                                        grid: {
+                                            drawOnChartArea: false
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        console.log('Monthly Sales Chart created successfully');
+                    } catch (e) {
+                        console.error('Error creating monthly sales chart:', e);
+                    }
+                } else {
+                    console.warn('Canvas element not found for monthly sales chart');
+                }
+
+                // Gross Profit Chart
+                const ctx2 = document.getElementById('grossProfitChart');
+                if (ctx2) {
+                    try {
+                        grossProfitChart = new Chart(ctx2, {
+                            type: 'bar',
+                            data: {
+                                labels: currentData.grossProfit.map(d => d.quarter || ''),
+                                datasets: [
+                                    {
+                                        label: 'Gross Profit',
+                                        data: currentData.grossProfit.map(d => d.grossProfit || 0),
+                                        backgroundColor: '#3B82F6',
+                                        borderColor: '#3B82F6',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: comparisonMode === 'vs Prior' ? 'Prior Year' : 'Target',
+                                        data: currentData.grossProfit.map(d => d.gpPriorTarget || 0),
+                                        backgroundColor: '#FBBF24',
+                                        borderColor: '#FBBF24',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Sales',
+                                        data: currentData.grossProfit.map(d => d.sales || 0),
+                                        type: 'line',
+                                        borderColor: '#10B981',
+                                        backgroundColor: 'transparent',
+                                        borderWidth: 2
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    },
+                                    tooltip: {
+                                        enabled: true
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Amount'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        console.log('Gross Profit Chart created successfully');
+                    } catch (e) {
+                        console.error('Error creating gross profit chart:', e);
+                    }
+                } else {
+                    console.warn('Canvas element not found for gross profit chart');
+                }
+            }, 100); // Small delay to ensure DOM is ready
+        }
+
+        function renderTable() {
+            const container = document.getElementById('tableContainer');
+            if (!container) {
+                console.warn('Table container not found');
+                return;
+            }
+            
+            // Check if data exists
+            if (!ALL_DATA || !ALL_DATA[selectedYear] || !ALL_DATA[selectedYear][comparisonMode]) {
+                container.innerHTML = '<p style="color: #718096; padding: 20px; text-align: center;">No data available for selected filters</p>';
+                return;
+            }
+            
+            const currentData = ALL_DATA[selectedYear][comparisonMode];
+            const data = currentData[activeTab] || [];
+            
+            if (!Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<p style="color: #718096; padding: 20px; text-align: center;">No data available</p>';
+                return;
+            }
+            
+            const filteredData = data.filter(row => {
+                if (!searchTerm) return true;
+                return Object.values(row).some(val => 
+                    String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            });
+
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #718096; padding: 20px; text-align: center;">No matching data found for "' + searchTerm + '"</p>';
+                return;
+            }
+
+            const headers = Object.keys(filteredData[0]);
+            let tableHTML = '<table><thead><tr>';
+            headers.forEach(header => {
+                tableHTML += `<th>${formatLabel(header)}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            filteredData.forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    tableHTML += `<td>${formatValue(row[header])}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        function changeYear(year) {
+            selectedYear = year;
+            renderDashboard();
+            // Wait for DOM update before creating charts
+            setTimeout(() => {
+                createCharts();
+            }, 100);
+        }
+
+        function changeMode(mode) {
+            comparisonMode = mode;
+            renderDashboard();
+            // Wait for DOM update before creating charts
+            setTimeout(() => {
+                createCharts();
+            }, 100);
+        }
+
+        function changeTab(tab) {
+            activeTab = tab;
+            searchTerm = '';
+            renderDashboard();
+            // No need to recreate charts when changing tabs, just update table
+            renderTable();
+        }
+
+        function handleSearch(event) {
+            searchTerm = event.target.value;
+            renderTable();
+        }
+
+        function formatLabel(str) {
+            return str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+        }
+
+        function formatValue(val) {
+            if (val === null || val === undefined) return '-';
+            if (typeof val === 'number') {
+                return val.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            }
+            return String(val);
+        }
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            const root = document.getElementById('dashboard-root');
+            if (root && !root.querySelector('.error-message')) {
+                root.innerHTML += '<div class="error-message" style="padding: 20px; margin-top: 20px; background: #fed7d7; color: #e53e3e; border-radius: 8px; display: flex; align-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>An error occurred. Check console for details.</div>';
+            }
+        });
+    </script>
+</body>
+</html>

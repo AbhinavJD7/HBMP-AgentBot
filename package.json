@@ -43,6 +43,16 @@
     "build:data-schemas": "cd packages/data-schemas && npm run build",
     "build:client": "cd client && npm run build",
     "build:client-package": "cd packages/client && npm run build",
+    "cap:sync": "npm run build:client && npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:add:android": "npx cap add android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "cap:generate-icons": "node scripts/generate-android-icons.js",
+    "cap:generate-ios-icons": "node scripts/generate-ios-icons.js",
+    "cap:build:ios": "./scripts/build-ios-ipa.sh",
     "build:packages": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:data-provider && NODE_OPTIONS=--max-old-space-size=8192 npm run build:data-schemas && NODE_OPTIONS=--max-old-space-size=8192 npm run build:api && NODE_OPTIONS=--max-old-space-size=8192 npm run build:client-package",
     "build:production": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:packages && NODE_OPTIONS=--max-old-space-size=8192 npm run build:client",
     "frontend": "npm run build:data-provider && npm run build:data-schemas && npm run build:api && npm run build:client-package && cd client && npm run build",
@@ -97,6 +107,8 @@
   "homepage": "https://librechat.ai/",
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.0.0",
     "@eslint/compat": "^1.2.6",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.20.0",
@@ -124,6 +136,7 @@
     "prettier": "^3.5.0",
     "prettier-eslint": "^16.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "sharp": "^0.34.5",
     "typescript-eslint": "^8.24.0"
   },
   "overrides": {

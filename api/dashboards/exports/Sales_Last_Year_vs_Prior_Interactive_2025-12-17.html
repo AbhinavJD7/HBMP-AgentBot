@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Last Year vs Prior Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            let attempts = 0;
+            const maxAttempts = 50;
+            const checkChart = setInterval(function() {
+                attempts++;
+                if (typeof Chart !== 'undefined') {
+                    clearInterval(checkChart);
+                    console.log('Chart.js loaded successfully');
+                    if (document.readyState !== 'loading' && typeof initializeDashboard === 'function') {
+                        setTimeout(initializeDashboard, 100);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkChart);
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+                    script.onload = function() {
+                        console.log('Chart.js loaded from alternative CDN');
+                        if (typeof initializeDashboard === 'function') {
+                            setTimeout(initializeDashboard, 100);
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+            }, 100);
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #1a202c;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header .subtitle { font-size: 16px; opacity: 0.95; }
+        .export-date { margin-top: 12px; font-size: 14px; opacity: 0.9; }
+        .dashboard-content { padding: 32px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #2d3748; }
+        .controls { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+        .button-group {
+            display: flex;
+            gap: 8px;
+            background: #f7fafc;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .button {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .button:hover { background: #e2e8f0; }
+        .button.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        .small-charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .small-chart-container {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 12px;
+            height: 180px;
+        }
+        .small-chart-wrapper {
+            height: 140px;
+            width: 100%;
+        }
+        .chart-container {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            height: 450px;
+            position: relative;
+        }
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+        .chart-container canvas, .small-chart-container canvas { max-height: 100% !important; width: 100% !important; }
+        .chart-title { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 12px; }
+        .filters-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .filters-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #2d3748; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .filter-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .filter-item strong { color: #4a5568; margin-right: 8px; }
+        .data-section { margin-top: 32px; }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        th { padding: 14px; text-align: left; font-weight: 600; font-size: 13px; }
+        td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        tbody tr:hover { background-color: #f7fafc; }
+        .search-box { margin-bottom: 16px; }
+        .search-box {
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .search-box input:focus { outline: none; border-color: #667eea; }
+        .search-icon-wrapper {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #718096;
+        }
+        .print-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Sales Last Year vs Prior Dashboard</h1>
+            <div class="subtitle">Fully Interactive Dashboard - All Charts & Data Embedded</div>
+            <div class="export-date">Exported: December 17, 2025 at 04:15 PM</div>
+        </div>
+        <div class="dashboard-content">
+            <div id="dashboard-root"></div>
+        </div>
+    </div>
+    <button class="print-button" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>Print / Save PDF</button>
+    <script>
+        const ALL_DATA = {
+  "mainChart": [
+    {
+      "period": "2016 02",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 03",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 04",
+      "salesLY": 75000000,
+      "salesPriorTarget": 35000000,
+      "grossProfit": 35000000
+    },
+    {
+      "period": "2017 01",
+      "salesLY": 45000000,
+      "salesPriorTarget": 10000000,
+      "grossProfit": 15000000
+    }
+  ],
+  "comparisonData": [
+    {
+      "period": "2016 02",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 03",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 04",
+      "salesLY": 75000000,
+      "salesPriorTarget": 35000000,
+      "grossProfit": 35000000
+    },
+    {
+      "period": "2017 01",
+      "salesLY": 45000000,
+      "salesPriorTarget": 10000000,
+      "grossProfit": 15000000
+    }
+  ],
+  "tableData": [
+    {
+      "period": "2016 02",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 03",
+      "salesLY": 55000000,
+      "salesPriorTarget": 15000000,
+      "grossProfit": 15000000
+    },
+    {
+      "period": "2016 04",
+      "salesLY": 75000000,
+      "salesPriorTarget": 35000000,
+      "grossProfit": 35000000
+    },
+    {
+      "period": "2017 01",
+      "salesLY": 45000000,
+      "salesPriorTarget": 10000000,
+      "grossProfit": 15000000
+    }
+  ]
+};
+        const INITIAL_FILTERS = {};
+        const CONFIG = {
+  "chartTitle": "Sales Last Year vs Prior",
+  "labelKey": "period",
+  "barDataKeys": [
+    {
+      "key": "salesLY",
+      "label": "Sales LY",
+      "color": "#3B82F6",
+      "yAxisID": "y"
+    },
+    {
+      "key": "salesPriorTarget",
+      "label": "Sales Prior/Target",
+      "color": "#FBBF24",
+      "yAxisID": "y"
+    }
+  ],
+  "lineDataKeys": [
+    {
+      "key": "grossProfit",
+      "label": "Gross Profit",
+      "color": "#10B981",
+      "yAxisID": "y1"
+    }
+  ],
+  "chartDataKey": "mainChart",
+  "tableDataKey": "comparisonData",
+  "yAxisLabel": "Sales",
+  "y1AxisLabel": "Gross Profit",
+  "filterGroups": []
+};
+        const CHART_DATA_KEY = 'mainChart';
+        const TABLE_DATA_KEY = 'comparisonData';
+        
+        let currentFilters = {};
+        Object.keys(INITIAL_FILTERS).forEach(key => {
+            currentFilters[key] = INITIAL_FILTERS[key];
+        });
+        let searchTerm = '';
+        let mainChartInstance = null;
+        let smallChartInstances = {};
+        
+        function initializeDashboard() {
+            if (typeof Chart === 'undefined') {
+                setTimeout(initializeDashboard, 100);
+                return;
+            }
+            renderDashboard();
+            setTimeout(function() { createCharts(); }, 200);
+        }
+        
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initializeDashboard);
+        } else {
+            initializeDashboard();
+        }
+        
+        function getCurrentData() {
+            // If no filters, return data directly
+            if (!CONFIG.filterGroups || CONFIG.filterGroups.length === 0) {
+                return ALL_DATA || (function() {
+                    const result = {};
+                    result[CHART_DATA_KEY] = [];
+                    result[TABLE_DATA_KEY] = [];
+                    if (CONFIG.smallCharts) {
+                        CONFIG.smallCharts.forEach(sc => {
+                            result[sc.dataKey] = [];
+                        });
+                    }
+                    return result;
+                })();
+            }
+            
+            let data = ALL_DATA;
+            for (const key in currentFilters) {
+                const value = currentFilters[key];
+                if (data && data[value]) {
+                    data = data[value];
+                } else {
+                    const result = {};
+                    result[CHART_DATA_KEY] = [];
+                    result[TABLE_DATA_KEY] = [];
+                    if (CONFIG.smallCharts) {
+                        CONFIG.smallCharts.forEach(sc => {
+                            result[sc.dataKey] = [];
+                        });
+                    }
+                    return result;
+                }
+            }
+            return data || (function() {
+                const result = {};
+                result[CHART_DATA_KEY] = [];
+                result[TABLE_DATA_KEY] = [];
+                if (CONFIG.smallCharts) {
+                    CONFIG.smallCharts.forEach(sc => {
+                        result[sc.dataKey] = [];
+                    });
+                }
+                return result;
+            })();
+        }
+        
+        function renderDashboard() {
+            try {
+                const currentData = getCurrentData();
+                let filterButtons = '';
+                if (CONFIG.filterGroups && CONFIG.filterGroups.length > 0) {
+                    CONFIG.filterGroups.forEach(group => {
+                        let buttons = '';
+                        group.options.forEach(opt => {
+                            const isActive = currentFilters[group.name] === opt ? 'active' : '';
+                            buttons += '<button class="button ' + isActive + '" onclick="changeFilter(\'' + group.name + '\', \'' + opt + '\')">' + opt + '</button>';
+                        });
+                        filterButtons += '<div class="button-group">' + buttons + '</div>';
+                    });
+                }
+                
+                let filterDisplay = '';
+                if (CONFIG.filterGroups && CONFIG.filterGroups.length > 0) {
+                    CONFIG.filterGroups.forEach(group => {
+                        filterDisplay += '<div class="filter-item"><strong>' + group.label + ':</strong> ' + (currentFilters[group.name] || 'N/A') + '</div>';
+                    });
+                }
+                
+                let smallChartsHTML = '';
+                if (CONFIG.smallCharts && CONFIG.smallCharts.length > 0) {
+                    smallChartsHTML = '<div class="small-charts-grid">';
+                    CONFIG.smallCharts.forEach((sc, idx) => {
+                        smallChartsHTML += '<div class="small-chart-container">' +
+                            '<h4 class="chart-title">' + sc.title + '</h4>' +
+                            '<div class="small-chart-wrapper">' +
+                            '<canvas id="smallChart' + idx + '"></canvas>' +
+                            '</div>' +
+                            '</div>';
+                    });
+                    smallChartsHTML += '</div>';
+                }
+                
+                let filtersSectionHTML = '';
+                if (CONFIG.filterGroups && CONFIG.filterGroups.length > 0) {
+                    filtersSectionHTML = '<div class="controls">' + filterButtons + '</div>' +
+                        '<div class="filters-section">' +
+                        '<h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Applied Filters</h3>' +
+                        '<div class="filters-grid">' + filterDisplay + '</div>' +
+                        '</div>';
+                }
+                
+                const html = '<div class="card">' +
+                    '<h2 class="card-title">' + (CONFIG.dashboardTitle || 'Sales Last Year vs Prior') + '</h2>' +
+                    filtersSectionHTML +
+                    smallChartsHTML +
+                    '<div class="chart-container">' +
+                    '<h4 class="chart-title">' + CONFIG.chartTitle + '</h4>' +
+                    '<div class="chart-canvas-wrapper">' +
+                    '<canvas id="mainChart"></canvas>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="data-section">' +
+                    '<h2 class="card-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>Dashboard Data</h2>' +
+                    '<div class="search-box">' +
+                    '<div class="search-icon-wrapper">' +
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<circle cx="11" cy="11" r="8"></circle>' +
+                    '<path d="m21 21-4.35-4.35"></path>' +
+                    '</svg>' +
+                    '</div>' +
+                    '<input type="text" id="searchInput" placeholder="Search data..." oninput="handleSearch(event)" value="' + searchTerm + '">' +
+                    '</div>' +
+                    '<div id="tableContainer"></div>' +
+                    '</div>';
+                
+                const root = document.getElementById('dashboard-root');
+                if (root) {
+                    root.innerHTML = html;
+                    renderTable();
+                }
+            } catch (error) {
+                console.error('Error rendering dashboard:', error);
+            }
+        }
+        
+        function createCharts() {
+            try {
+                if (mainChartInstance && typeof mainChartInstance.destroy === 'function') {
+                    mainChartInstance.destroy();
+                    mainChartInstance = null;
+                }
+                Object.keys(smallChartInstances).forEach(key => {
+                    if (smallChartInstances[key] && typeof smallChartInstances[key].destroy === 'function') {
+                        smallChartInstances[key].destroy();
+                    }
+                });
+                smallChartInstances = {};
+            } catch (e) {
+                console.warn('Error destroying charts:', e);
+            }
+            
+            setTimeout(() => {
+                if (typeof Chart === 'undefined') return;
+                
+                const currentData = getCurrentData();
+                
+                // Create small charts
+                if (CONFIG.smallCharts) {
+                    CONFIG.smallCharts.forEach((sc, idx) => {
+                        const ctx = document.getElementById('smallChart' + idx);
+                        if (ctx && currentData[sc.dataKey] && currentData[sc.dataKey].length > 0) {
+                            const chartData = currentData[sc.dataKey];
+                            const labels = chartData.map(d => d[sc.labelKey] || d.period || d.name || '');
+                            const datasets = [];
+                            
+                            if (sc.dataKeys && sc.dataKeys.length > 0) {
+                                sc.dataKeys.forEach((key, keyIdx) => {
+                                    datasets.push({
+                                        label: key.label || key,
+                                        data: chartData.map(d => d[key.key || key] || 0),
+                                        backgroundColor: key.color || sc.colors?.[keyIdx] || ['#3B82F6', '#FBBF24'][keyIdx % 2],
+                                        borderColor: key.color || sc.colors?.[keyIdx] || ['#3B82F6', '#FBBF24'][keyIdx % 2],
+                                        fill: sc.type === 'area',
+                                        tension: 0.4
+                                    });
+                                });
+                            }
+                            
+                            smallChartInstances['small' + idx] = new Chart(ctx, {
+                                type: sc.type || 'line',
+                                data: { labels, datasets },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: { enabled: true }
+                                    },
+                                    scales: {
+                                        y: { beginAtZero: true }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Create main composed chart
+                const mainChartData = currentData[CHART_DATA_KEY] || [];
+                const ctx = document.getElementById('mainChart');
+                if (!ctx || !mainChartData.length) return;
+                
+                const labels = mainChartData.map(d => d[CONFIG.labelKey] || d.period || d.name || '');
+                const datasets = [];
+                
+                // Add bar datasets
+                CONFIG.barDataKeys.forEach((key, idx) => {
+                    datasets.push({
+                        type: 'bar',
+                        label: key.label || key,
+                        data: mainChartData.map(d => d[key.key || key] || 0),
+                        backgroundColor: key.color || ['#3B82F6', '#FBBF24'][idx % 2],
+                        borderColor: key.color || ['#3B82F6', '#FBBF24'][idx % 2],
+                        yAxisID: key.yAxisID || 'y',
+                        order: 2
+                    });
+                });
+                
+                // Add line datasets
+                CONFIG.lineDataKeys.forEach((key, idx) => {
+                    datasets.push({
+                        type: 'line',
+                        label: key.label || key,
+                        data: mainChartData.map(d => d[key.key || key] || 0),
+                        borderColor: key.color || '#10B981',
+                        backgroundColor: 'transparent',
+                        yAxisID: key.yAxisID || 'y1',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        order: 1
+                    });
+                });
+                
+                mainChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: { enabled: true }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                beginAtZero: true,
+                                title: { display: true, text: CONFIG.yAxisLabel || 'Value' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                beginAtZero: true,
+                                grid: { drawOnChartArea: false },
+                                title: { display: true, text: CONFIG.y1AxisLabel || 'Value' }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+        
+        function renderTable() {
+            const container = document.getElementById('tableContainer');
+            if (!container) return;
+            
+            const currentData = getCurrentData();
+            let data = currentData[TABLE_DATA_KEY] || [];
+            
+            if (!Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<p style="color: #718096; padding: 20px; text-align: center;">No data available</p>';
+                return;
+            }
+            
+            const filteredData = data.filter(row => {
+                if (!searchTerm) return true;
+                return Object.values(row).some(val => 
+                    String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            });
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #718096; padding: 20px; text-align: center;">No matching data found</p>';
+                return;
+            }
+            
+            const headers = Object.keys(filteredData[0]);
+            let tableHTML = '<table><thead><tr>';
+            headers.forEach(header => {
+                tableHTML += '<th>' + formatLabel(header) + '</th>';
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            filteredData.forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    tableHTML += '<td>' + formatValue(row[header]) + '</td>';
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+        
+        function changeFilter(filterName, value) {
+            currentFilters[filterName] = value;
+            renderDashboard();
+            setTimeout(function() { createCharts(); }, 100);
+        }
+        
+        function handleSearch(event) {
+            searchTerm = event.target.value;
+            renderTable();
+        }
+        
+        function formatLabel(str) {
+            return str.replace(/([A-Z])/g, ' $1').replace(/^./, function(s) { return s.toUpperCase(); }).trim();
+        }
+        
+        function formatValue(val) {
+            if (val === null || val === undefined) return '-';
+            if (typeof val === 'number') {
+                return val.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            }
+            return String(val);
+        }
+        
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+    </script>
+</body>
+</html>

@@ -74,17 +74,87 @@ function getDashboardsExportsPath() {
 
 /**
  * Build URLs for dashboard files
- * @param {string} folderName - Name of the dashboard folder
+ * @param {string} folderName - Name of the dashboard folder (empty string for flat structure)
  * @param {DashboardFileRefs} files - File references from meta.json
  * @returns {{htmlUrl: string, jsonUrl: string, imageUrl: string}}
  */
 function buildDashboardUrls(folderName, files) {
-  const baseUrl = `/dashboards/exports/${folderName}`;
+  const baseUrl = folderName ? `/dashboards/exports/${folderName}` : '/dashboards/exports';
   return {
     htmlUrl: `${baseUrl}/${files.html}`,
-    jsonUrl: `${baseUrl}/${files.json}`,
-    imageUrl: `${baseUrl}/${files.image}`,
+    jsonUrl: files.json ? `${baseUrl}/${files.json}` : '',
+    imageUrl: files.image ? `${baseUrl}/${files.image}` : '',
   };
+}
+
+/**
+ * Extract dashboard name from HTML filename
+ * @param {string} htmlFileName - HTML filename (e.g., "Sales_Overview_2025-12-17.html")
+ * @returns {string} Dashboard name (e.g., "Sales Overview")
+ */
+function extractDashboardNameFromFilename(htmlFileName) {
+  // Remove extension
+  const nameWithoutExt = htmlFileName.replace(/\.html$/i, '');
+  // Remove date pattern (YYYY-MM-DD or YYYY-MM-DD)
+  const nameWithoutDate = nameWithoutExt.replace(/_\d{4}-\d{2}-\d{2}$/, '');
+  // Remove "Interactive" suffix if present
+  const nameWithoutInteractive = nameWithoutDate.replace(/_Interactive$/i, '');
+  // Convert underscores to spaces and capitalize words
+  return nameWithoutInteractive
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/**
+ * Generate dashboard ID from filename
+ * @param {string} htmlFileName - HTML filename
+ * @returns {string} Dashboard ID
+ */
+function generateDashboardIdFromFilename(htmlFileName) {
+  const nameWithoutExt = htmlFileName.replace(/\.html$/i, '');
+  const nameWithoutDate = nameWithoutExt.replace(/_\d{4}-\d{2}-\d{2}$/, '');
+  const nameWithoutInteractive = nameWithoutDate.replace(/_Interactive$/i, '');
+  return nameWithoutInteractive.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+/**
+ * Find matching files for an HTML file (PNG, JSON metadata)
+ * @param {string} htmlFileName - HTML filename
+ * @param {Array<{name: string, isFile: boolean}>} allEntries - All entries in the directory
+ * @returns {DashboardFileRefs} File references
+ */
+function findMatchingFiles(htmlFileName, allEntries) {
+  const baseName = htmlFileName.replace(/\.html$/i, '');
+  const files = { html: htmlFileName, json: null, image: null };
+
+  for (const entry of allEntries) {
+    if (!entry.isFile()) continue;
+    const entryName = entry.name;
+    const entryBase = entryName.toLowerCase();
+
+    // Look for matching PNG/JPG
+    if (!files.image && (entryBase.endsWith('.png') || entryBase.endsWith('.jpg') || entryBase.endsWith('.jpeg'))) {
+      const entryBaseName = entryName.replace(/\.(png|jpg|jpeg)$/i, '');
+      // Check if base names match (allowing for variations)
+      if (entryBaseName.toLowerCase().includes(baseName.toLowerCase().substring(0, 20)) ||
+          baseName.toLowerCase().includes(entryBaseName.toLowerCase().substring(0, 20))) {
+        files.image = entryName;
+      }
+    }
+
+    // Look for matching JSON metadata
+    if (!files.json && entryBase.endsWith('.json')) {
+      const entryBaseName = entryName.replace(/\.json$/i, '');
+      if (entryBaseName.toLowerCase().includes('metadata') &&
+          (entryBaseName.toLowerCase().includes(baseName.toLowerCase().substring(0, 20)) ||
+           baseName.toLowerCase().includes(entryBaseName.toLowerCase().substring(0, 20)))) {
+        files.json = entryName;
+      }
+    }
+  }
+
+  return files;
 }
 
 /**
@@ -94,19 +164,21 @@ function buildDashboardUrls(folderName, files) {
  * @param {Object} files - Detected files (html, json, image)
  * @returns {DashboardMeta}
  */
-function convertMetadataToMeta(metadata, folderName, files) {
+function convertMetadataToMeta(metadata, folderNameOrDashboardName, files) {
   const dashboard = metadata.dashboard || {};
   const visualization = metadata.visualization || {};
   const filters = metadata.filters || {};
   const context = metadata.context || {};
 
-  // Generate ID from folder name (convert to lowercase with underscores)
-  const id = folderName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  // Generate ID from folder/dashboard name (convert to lowercase with underscores)
+  // Handle both folder names (with underscores) and dashboard names (with spaces)
+  const nameForId = folderNameOrDashboardName.replace(/\s+/g, '_').toLowerCase();
+  const id = nameForId.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
-  // Extract category from type or use folder name
+  // Extract category from type or use folder/dashboard name
   const category = dashboard.type
     ? dashboard.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    : folderName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    : folderNameOrDashboardName.split(/[\s_]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 
   // Build KPIs from metrics
   const kpis = (visualization.metrics || []).map((metric, index) => ({
@@ -171,10 +243,10 @@ function convertMetadataToMeta(metadata, folderName, files) {
 
   return {
     id: id,
-    name: dashboard.name || folderName,
+    name: dashboard.name || folderNameOrDashboardName,
     category: category,
     audience: undefined, // Not available in Metadata format
-    description: dashboard.description || `Dashboard showing ${dashboard.name || folderName} data`,
+    description: dashboard.description || `Dashboard showing ${dashboard.name || folderNameOrDashboardName} data`,
     files: files,
     timeRange: context.selectedYear || undefined,
     tabs: undefined, // Not available in Metadata format
@@ -239,36 +311,76 @@ async function loadAllDashboards() {
   try {
     const entries = await fs.readdir(dashboardsPath, { withFileTypes: true });
 
-    // First, check for meta.json directly in exports folder (flat structure)
-    const flatMetaPath = path.join(dashboardsPath, 'meta.json');
-    try {
-      await fs.access(flatMetaPath);
-      const metaContent = await fs.readFile(flatMetaPath, 'utf8');
-      const meta = /** @type {DashboardMeta} */ (JSON.parse(metaContent));
+    // Separate files and directories
+    const htmlFiles = [];
+    const directories = [];
 
-      // For flat structure, files are directly in exports/, so use empty folder name
-      // Build URLs directly pointing to files in exports root
-      const baseUrl = '/dashboards/exports';
-      const urls = {
-        htmlUrl: `${baseUrl}/${meta.files.html}`,
-        jsonUrl: `${baseUrl}/${meta.files.json}`,
-        imageUrl: `${baseUrl}/${meta.files.image}`,
-      };
-
-      dashboards.push({
-        ...meta,
-        ...urls,
-      });
-    } catch (error) {
-      // meta.json not found in root, continue to check folders
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.toLowerCase().endsWith('.html')) {
+        htmlFiles.push(entry);
+      } else if (entry.isDirectory()) {
+        directories.push(entry);
+      }
     }
 
-    // Process subdirectories (folder-based structure)
-    for (const entry of entries) {
-      // Skip files, only process directories
-      if (!entry.isDirectory()) {
-        continue;
+    // Process HTML files directly in exports folder (flat structure)
+    if (htmlFiles.length > 0) {
+      // Get all entries for matching files
+      const allEntries = await fs.readdir(dashboardsPath, { withFileTypes: true });
+
+      for (const htmlFile of htmlFiles) {
+        try {
+          const htmlFileName = htmlFile.name;
+          const dashboardName = extractDashboardNameFromFilename(htmlFileName);
+          const dashboardId = generateDashboardIdFromFilename(htmlFileName);
+
+          // Find matching PNG and JSON files
+          const files = findMatchingFiles(htmlFileName, allEntries);
+
+          // Try to load metadata JSON if found
+          let meta = null;
+          if (files.json) {
+            try {
+              const metadataPath = path.join(dashboardsPath, files.json);
+              const metadataContent = await fs.readFile(metadataPath, 'utf8');
+              const metadata = JSON.parse(metadataContent);
+              // Convert Metadata format to meta.json format
+              meta = convertMetadataToMeta(metadata, dashboardName, files);
+              meta.id = dashboardId; // Use generated ID
+            } catch (metadataError) {
+              // If metadata parsing fails, create basic meta
+              logger.warn(`[DashboardCatalog] Could not parse metadata for ${htmlFileName}:`, metadataError.message);
+            }
+          }
+
+          // If no metadata found or parsing failed, create basic meta
+          if (!meta) {
+            meta = {
+              id: dashboardId,
+              name: dashboardName,
+              category: 'General',
+              description: `Dashboard: ${dashboardName}`,
+              files: files,
+              tags: [dashboardName.toLowerCase().replace(/\s+/g, '_'), 'dashboard'],
+            };
+          }
+
+          // Build URLs for flat structure (no folder name)
+          const urls = buildDashboardUrls('', files);
+
+          // Create catalog item
+          dashboards.push({
+            ...meta,
+            ...urls,
+          });
+        } catch (error) {
+          logger.warn(`[DashboardCatalog] Skipping HTML file ${htmlFile.name}:`, error.message);
+        }
       }
+    }
+
+    // Process subdirectories (folder-based structure) - fallback for backward compatibility
+    for (const entry of directories) {
 
       const folderName = entry.name;
       const folderPath = path.join(dashboardsPath, folderName);

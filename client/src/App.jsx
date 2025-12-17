@@ -7,7 +7,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'; // Disabled
 import { Toast, ThemeProvider, ToastProvider } from '@librechat/client';
 import { QueryClient, QueryClientProvider, QueryCache } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
 import { ScreenshotProvider, useApiErrorBoundary } from './hooks';
+import { useCapacitorStatusBar } from './hooks/useCapacitorStatusBar';
 import { getThemeFromEnv } from './utils/getThemeFromEnv';
 import { initializeFontSize } from '~/store/fontSize';
 import { LiveAnnouncer } from '~/a11y';
@@ -28,7 +30,24 @@ const App = () => {
 
   useEffect(() => {
     initializeFontSize();
+
+    // Add capacitor-platform class to body and root for CSS targeting
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add('capacitor-platform');
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.classList.add('capacitor-platform');
+      }
+      // Also set inline style as backup
+      document.body.style.paddingTop = '48px';
+      if (rootElement) {
+        rootElement.style.paddingTop = '48px';
+      }
+    }
   }, []);
+
+  // Configure StatusBar for Capacitor apps
+  useCapacitorStatusBar();
 
   // Load theme from environment variables if available
   const envTheme = getThemeFromEnv();

@@ -5,6 +5,7 @@ import { QueryKeys, Constants } from 'librechat-data-provider';
 import type { TMessage } from 'librechat-data-provider';
 import type { Dispatch, SetStateAction } from 'react';
 import { useLocalize, useNewConvo } from '~/hooks';
+import { useStatusBarHeight } from '~/hooks/useStatusBarHeight';
 import { clearMessagesCache } from '~/utils';
 import store from '~/store';
 
