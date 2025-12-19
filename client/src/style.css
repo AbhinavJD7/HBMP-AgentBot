@@ -1519,20 +1519,20 @@ html {
   --status-bar-height: 24px; /* Default Android status bar height */
 }
 
-/* Safe area top padding for Capacitor apps - use max of safe area or status bar height */
+/* Safe area top padding for Capacitor apps - use CSS variables dynamically */
 .safe-area-top {
-  padding-top: max(var(--safe-area-inset-top), var(--status-bar-height, 24px), 24px) !important;
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) !important;
   margin-top: 0 !important;
 }
 
-/* For Capacitor apps, add body padding - hardcoded 48px for Android status bar */
+/* For Capacitor apps, use dynamic status bar height from CSS variable */
 body.capacitor-platform {
-  padding-top: 48px !important;
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) !important;
 }
 
-/* Also add padding to root element for Capacitor */
+/* Also add padding to root element for Capacitor using dynamic value */
 #root.capacitor-platform {
-  padding-top: 48px !important;
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) !important;
 }
 
 .dark body,

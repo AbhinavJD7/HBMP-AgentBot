@@ -19,6 +19,7 @@ import dashboardRoutes from './Dashboard';
 import ShareRoute from './ShareRoute';
 import ChatRoute from './ChatRoute';
 import Search from './Search';
+import Terms from './Terms';
 import Root from './Root';
 
 const AuthLayout = () => (
@@ -36,6 +37,11 @@ export const router = createBrowserRouter(
     {
       path: 'share/:shareId',
       element: <ShareRoute />,
+      errorElement: <RouteErrorBoundary />,
+    },
+    {
+      path: 'terms',
+      element: <Terms />,
       errorElement: <RouteErrorBoundary />,
     },
     {

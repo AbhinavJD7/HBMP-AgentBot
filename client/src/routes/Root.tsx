@@ -45,11 +45,6 @@ export default function Root() {
   });
 
   useSearchEnabled(isAuthenticated);
-  
-  // Hardcode status bar height for Capacitor apps
-  // Android status bar is typically 24px, but can be up to 48px on some devices
-  // Using 48px to ensure it works on all devices including notched ones
-  const statusBarHeight = Capacitor.isNativePlatform() ? 48 : 0;
 
   useEffect(() => {
     if (termsData) {
@@ -81,7 +76,9 @@ export default function Root() {
                 className="flex" 
                 style={{ 
                   height: `calc(100dvh - ${bannerHeight}px)`,
-                  paddingTop: `${statusBarHeight}px`,
+                  paddingTop: Capacitor.isNativePlatform() 
+                    ? 'var(--safe-area-inset-top, env(safe-area-inset-top, 0px))' 
+                    : '0px',
                 }}
               >
                 <div className="relative z-0 flex h-full w-full overflow-hidden">

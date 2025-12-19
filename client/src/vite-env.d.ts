@@ -9,3 +9,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Declare module for raw markdown imports
+declare module '*.md?raw' {
+  const content: string;
+  export default content;
+}

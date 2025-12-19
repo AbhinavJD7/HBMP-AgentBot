@@ -38,11 +38,7 @@ const App = () => {
       if (rootElement) {
         rootElement.classList.add('capacitor-platform');
       }
-      // Also set inline style as backup
-      document.body.style.paddingTop = '48px';
-      if (rootElement) {
-        rootElement.style.paddingTop = '48px';
-      }
+      // Don't set hardcoded padding - let CSS variables handle it dynamically
     }
   }, []);
 
