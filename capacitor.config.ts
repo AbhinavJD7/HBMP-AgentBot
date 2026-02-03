@@ -26,6 +26,14 @@ const config: CapacitorConfig = {
       style: 'dark',
       resizeOnFullScreen: true,
     },
+    Camera: {
+      presentationStyle: 'fullscreen',
+      quality: 90,
+      allowEditing: false,
+      resultType: 'uri',
+      saveToGallery: false,
+      correctOrientation: true,
+    },
   },
   android: {
     buildOptions: {
